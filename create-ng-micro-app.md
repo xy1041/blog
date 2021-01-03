@@ -15,9 +15,9 @@ Node.js和npm的安装不赘述。
 2. 安装环境（默认Angular10.1以上，angular-eslint支持最低10.1）
 
     ```sh
-        # 安装Angular/cli和angular-eslint的schematics
-        npm i -g @angular/cli @angular-devkit/{core,schematics} @angular-eslint/schematics
+    # 安装Angular/cli和angular-eslint的schematics
+    npm i -g @angular/cli @angular-devkit/{core,schematics} @angular-eslint/schematics
         
-        # 使用这些schematics建立一个用angular-eslint检查代码的angular项目
-        ng new --collection=@angular-eslint/schematics
+    # 使用这些schematics建立一个用angular-eslint检查代码的angular项目
+    ng new --collection=@angular-eslint/schematics
     ```
