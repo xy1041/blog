@@ -178,3 +178,8 @@ Node.js和npm的安装不赘述。
 
       
 ### 到此，一个可以独立使用也可以作为微应用载入的Angular项目就构建完成
+<br>
+
+#### 参考内容：
+- [1] [qiankun文档](https://qiankun.umijs.org/zh/guide/tutorial#angular-%E5%BE%AE%E5%BA%94%E7%94%A8)
+- [2] [Angular-eslint文档](https://github.com/angular-eslint/angular-eslint/blob/master/README.md)
