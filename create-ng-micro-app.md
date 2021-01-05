@@ -144,3 +144,30 @@ Node.js和npm的安装不赘述。
       ```html
       <script src="/assets/zone.js" ignore></script>
       ```
+   6. 修正 ng build 打包报错问题
+
+      修改 tsconfig.json 文件
+   
+      ```json
+         - "target": "es2015",
+         + "target": "es5",
+         + "typeRoots": [
+         +   "node_modules/@types"
+         + ],
+      ```
+   7. 为了防止主应用或其他微应用也为 angular 时，<app-root></app-root> 会冲突的问题，建议给<app-root> 加上一个唯一的 id，比如说当前应用名称。
+      <br/><br/>
+      src/index.html
+      ```html
+      - <app-root></app-root>
+      + <app-root id="angular9"></app-root>
+      ```
+      <br/><br/>
+      src/app/app.component.ts
+      ```ts
+      - selector: 'app-root',
+      + selector: '#angular9 app-root',
+      ```
+
+      
+### 到此，一个可以独立使用也可以作为微应用载入的Angular项目就构建完成
