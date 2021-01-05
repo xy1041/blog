@@ -164,10 +164,11 @@ Node.js和npm的安装不赘述。
       <br/><br/>
       src/index.html
       
-      ```html
+      ```
       - <app-root></app-root>
       + <app-root id="angular9"></app-root>
       ```
+      
       <br/><br/>
       src/app/app.component.ts
       
