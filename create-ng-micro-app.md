@@ -25,7 +25,7 @@ Node.js和npm的安装不赘述。
 3. 构建符合qiankun要求的微应用
    1. 在 src 目录新增 public-path.js 文件，内容为：
       
-      ```javascript
+      ```js
          if (window.__POWERED_BY_QIANKUN__) {
            // eslint-disable-next-line no-undef
            __webpack_public_path__ = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;
@@ -33,7 +33,7 @@ Node.js和npm的安装不赘述。
       ```
    2. 设置 history 模式路由的 base，src/app/app-routing.module.ts 文件：
       
-      ```typescript
+      ```ts
          + import { APP_BASE_HREF } from '@angular/common';
       
          @NgModule({
@@ -45,7 +45,7 @@ Node.js和npm的安装不赘述。
       ```
    3. 修改入口文件，src/main.ts 文件。
       
-      ```typescript
+      ```ts
          import './public-path';
          import { enableProdMode, NgModuleRef } from '@angular/core';
          import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
