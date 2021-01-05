@@ -74,6 +74,7 @@ Node.js和npm的安装不赘述。
             // @ts-ignore
             app.destroy();
          }
+      ```
       
    4. 修改 webpack 打包配置
 
@@ -85,7 +86,7 @@ Node.js和npm的安装不赘述。
 
       在根目录增加 custom-webpack.config.js ，内容为：
       
-      ```javascript
+      ```js
          const appName = require('./package.json').name;
          module.exports = {
             devServer: {
@@ -162,12 +163,14 @@ Node.js和npm的安装不赘述。
    7. 为了防止主应用或其他微应用也为 angular 时，<app-root></app-root> 会冲突的问题，建议给<app-root> 加上一个唯一的 id，比如说当前应用名称。
       <br/><br/>
       src/index.html
+      
       ```html
       - <app-root></app-root>
       + <app-root id="angular9"></app-root>
       ```
       <br/><br/>
       src/app/app.component.ts
+      
       ```ts
       - selector: 'app-root',
       + selector: '#angular9 app-root',
