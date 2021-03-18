@@ -11,7 +11,7 @@
 
 实践中常见的表单数据交互流程：
 
- ![流程图](./assets/images/流程图.png)
+ ![流程图](https://res-qn.baoshiyun.com/91351181301202esbt.png)
 
 **问题**
 
@@ -28,7 +28,7 @@
 
 理想的表单数据交互：
 
-![流程图](./assets/images/流程图2.png)
+![流程图](https://res-qn.baoshiyun.com/91351181301202mbvo.png)
 
 **解决问题**
 
@@ -52,7 +52,7 @@
 
 - #### 理解ant-design Form.Item控制控件的本质
 
-![img.png](assets/images/img.png)
+![img.png](https://res-qn.baoshiyun.com/61551181301202cldo.png)
 
 > ant-design的Form.Item通过给包装的控件传入value和onChange（或类似的其他属性）来接管了该控件的数据传入（value）和传出（onChange），从而实现了表单和输入控件的双向绑定。
 > 而用户通常会使用的输入控件就是ant-design提供的输入控件，它们都对ant-design的Form.Item已经完整配合。<br/>所以我们只需要用value和onChange作为props即可自己实现一个受Form.Item控制的高阶输入控件
@@ -94,10 +94,10 @@ const CustomInput = ({value, onChange, ...restProps}) => { // 建立一个props�
 
 我们尝试过的类型：
 
-![结构图](./assets/images/结构图1.png)
+![结构图](https://res-qn.baoshiyun.com/91351181301202mzxz.png)
  <br/> 该类型下网络请求在搜索栏组件内发起️
 
-![结构图](./assets/images/结构图2.png)
+![结构图](https://res-qn.baoshiyun.com/91351181301202mxhx.png)
  <br/> 该类型下网络请求在列表展示组件内发起
 
 **问题**
@@ -110,8 +110,8 @@ const CustomInput = ({value, onChange, ...restProps}) => { // 建立一个props�
 受React-beautiful-dnd启发，使用react的自定义hooks实现一个可以同时控制搜索栏组件和列表展示组件的自定义业务逻辑hook
 
 
-结构如下：
-![结构图](./assets/images/结构图3.png)
+结构如下：<br>
+![结构图](https://res-qn.baoshiyun.com/91351181301202ciqj.png)
 <br>
 在该结构下，网络请求位于usePaginationList的hooks内，双方都可以通过hooks返回的方法进行搜索操作，同时搜索栏组件的Form实例使用的也是hooks内部生成的Form实例，当搜索栏的输入值有改变时可以同步给hooks，保证任何时候任何对象触发Form的submit都会用当前显示的搜索条件进行搜索
 
