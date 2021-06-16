@@ -29,7 +29,7 @@
 
 入口文件例：
 
-```javascript
+```jsx
  class SDKName {
   constructor(options) {
     this.options = options
@@ -44,7 +44,7 @@
 
   _initDom() {
     // ... 业务操作
-    ReactDOM.render(<App {...this.options}/>, this.container) // app组件是React组件
+    ReactDOM.render(<App {...this.options} />, this.container) // app组件是React组件
   }
   
   unmount() {
