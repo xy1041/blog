@@ -22,10 +22,8 @@
 
 ### 1、实现将react项目打入一个sdk中供人引用
 
-该部分之前已经实现过，具体方式为将一个React项目的初始化部分作成一个构造器函数，
-并在webpack打包配置中将该函数作为入口打包到单一文件中，页面通过载入该文件（可以通过js引入或npm的import方式），
-将构造器函数挂载到window对象上，在需要使用时将容器元素和其他sdk内部要求的参数作为新建实例的参数实例化，
-实例化过程中会自动将该React项目初始化在指定的容器上
+该部分之前已经实现过，具体方式为将一个React项目的初始化部分作成一个构造器函数， 并在webpack打包配置中将该函数作为入口打包到单一文件中，页面通过载入该文件（可以通过js引入或npm的import方式），
+将构造器函数挂载到window对象上，在需要使用时将容器元素和其他sdk内部要求的参数作为新建实例的参数实例化， 实例化过程中会自动将该React项目初始化在指定的容器上
 
 入口文件例：
 
@@ -36,7 +34,7 @@
     // ... 业务操作
     this._init()
   }
-  
+
   _init() {
     // ...业务操作
     this.options.container && this._initDom()
@@ -46,7 +44,7 @@
     // ... 业务操作
     ReactDOM.render(<App {...this.options} />, this.container) // app组件是React组件
   }
-  
+
   unmount() {
     this.options.container && ReactDOM.unmountComponentAtNode(this.options.container)
   }
@@ -74,11 +72,13 @@ const options = {
 }
 
 ```
- 
+
 这样便能实现打包时生成一个SDKName.min.js的文件，并且该文件载入之后会将SDKName这个class类挂载到window对象上，以供调用
 
 使用例：
+
 ```html
+
 <script src="https://someWebSite.com/SDKName.min.js"></script>
 <div id="root"></div>
 <script>
@@ -89,4 +89,143 @@ const options = {
 </script>
 ```
 
-To be Continued...
+### 2、实现点击特定元素弹出由SDK控制的弹出菜单
+
+实现思路：应当向SDK对象上挂载两个方法，一个可以在指定的容器*里渲染弹出菜单，一个可以由外部主动删除渲染的菜单
+
+*指定的容器主要是针对弹出菜单后页面会有上下滚动的需求而设定（参考了ant-design的设计），实际上渲染的菜单的页面相对位置是由传入组件的点击事件event的点击位置决定的
+
+挂载渲染和卸载菜单方法：
+
+```javascript
+class SDKName {
+  
+  // ...其他属性和方法
+
+  /**
+   * @description 销毁已经渲染的选择上传方式
+   */
+  unmountSelection() {
+    if (this.uploadSelectorContainer) {
+      ReactDOM.unmountComponentAtNode(this.uploadSelectorContainer)
+      this.uploadSelectorContainer.parentNode.removeChild(this.uploadSelectorContainer)
+      this.uploadSelectorContainer = null
+    }
+  }
+  
+  /**
+   * @description 展示上传选择框，目前有两个选项：从本地选择上传、从素材库选择
+   * @param {string[]} types: 支持的上传类型
+   * @param {MouseEvent} event: 鼠标点击事件，用于定位弹出框
+   * @param {() => HTMLElement} getPopupContainer: 获得滚动用的参考容器
+   * @return {{unmount: function, eventEmitter: Subject}} 返回unmount方法和eventEmitter事件触发器
+   */
+  showUploadSelection({types, event, getPopupContainer}) {
+    console.log('=============参数：', types, event, getPopupContainer)
+    if (event.target) {
+      // 判断是否是在已经渲染的菜单内进行二次点击
+      
+      if (isClickSelf(event)) {
+        console.log('=============点击在组件内，不处理', event)
+        return null
+      }
+    }
+    
+    // 渲染之前先卸载之前渲染的菜单
+    this.unmountSelection()
+
+    const newUploadSelectorContainer = document.createElement('div')
+    
+    // 使用预定的字符串作为容器元素的id
+    newUploadSelectorContainer.id = SELECTOR_CONTAINER_ID
+
+    // 如果不传入getPopupContainer就选择document.body作为容器插入的父节点
+    const parent = getPopupContainer ? getPopupContainer() : document.body
+    
+    parent.appendChild(newUploadSelectorContainer)
+
+    // 在容器上渲染菜单组件
+    ReactDOM.render(<UploadSelector event={event} types={types} container={parent}/>, newUploadSelectorContainer)
+
+    // 将容器节点保存在sdk内
+    this.uploadSelectorContainer = newUploadSelectorContainer
+    
+    return {unmount: this.unmountSelection, eventEmitter: uploadSelectionSubject}
+  }
+}
+```
+
+这样就可以实现在任意html节点上挂载和销毁我们的弹出菜单，但是弹出菜单的位置应当是点击事件的位置，所以UploadSelector组件内部需要对event做处理
+
+```jsx
+
+import React, {useEffect, useState} from 'react'
+
+import {Button, Modal} from 'antd'
+import s from './index.module.less'
+
+const selectionIdealHeight = 96
+const selectionIdealWidth = 126
+
+const UploadSelector = ({container, event, types}) => {
+
+  const [style, setStyle] = useState({})
+
+  const [selectorVisible, setSelectorVisible] = useState(false)
+  
+  useEffect(() => {
+    
+    // 获取渲染容器的文档内位置
+    const rect = container.getBoundingClientRect()
+
+    // 计算event点击和rect之间的相位置，并且将容器的style中的left和top值计算出来
+    let left = Math.max(0, event.clientX - rect.x)
+    let top = Math.max(0, event.clientY - rect.y)
+
+    // 获得window的宽高
+    
+    const windowHeight = window.innerHeight
+
+    const windowWidth = window.innerWidth
+
+    // 判断菜单向左展开还是向右展开
+    if (windowHeight - event.clientY < selectionIdealHeight) {
+      top -= selectionIdealHeight
+    }
+
+    // 判断菜单向下展开还是向上展开
+    if (windowWidth - event.clientX < selectionIdealWidth) {
+      left -= selectionIdealWidth
+    }
+
+    setStyle({
+      left,
+      top
+    })
+  }, [event, container])
+
+  const showMaterial = () => {
+    // ... 填写逻辑展示素材库
+  }
+  
+  const uploadBySelf = e => {
+    // 将事件传出给用户，由用户自己进行上传操作
+    uploadSelectionSubject.next({
+      event: UPLOAD_EVENTS.UPLOAD_BY_SELF
+    })
+  }
+
+  return <div className={s.selectorWrapper} style={style}>
+    <div className={s.btnWrapper}>
+      <Button onClick={showMaterial} className={s.btn}>素材库选择</Button>
+    </div>
+    <div className={s.btnWrapper}>
+      <Button onClick={uploadBySelf} className={s.btn}>本地上传</Button>
+    </div>
+  </div>
+}
+
+export default UploadSelector
+```
+
+当event或container参数变化时，计算渲染的具体位置并改变容器元素selectorWrapper的style，selectorWrapper的css中的position属性是absolute，所以对应的left和top应该是相对于传入的容器的位置
