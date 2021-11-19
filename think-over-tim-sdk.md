@@ -11,3 +11,4 @@ TIM对象包含create方法，作为SDK的工厂函数可以在一个浏览器se
 
 
 
+To be continued
