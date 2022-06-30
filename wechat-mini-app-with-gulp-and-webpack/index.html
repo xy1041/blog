@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"xy1041.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="微信小程序的IDE开发、打包📦 流程设计 和 typescript 应用方式 背景要为直播sdk开发微信小程序版，希望通过通用IDE（VSCode、WebStorm）开发，微信小程序开发工具仅作为快速预览工具使用 希望使用Typescript，并且使用Gulp进行代码的处理和移动，在后续过程中发现处理打包关系上的诸多问题，因此在js处理流程中添加Webpack用来处理第三方依赖。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用gulp和webpack开发微信小程序">
+<meta property="og:url" content="https://xy1041.github.io/blog/wechat-mini-app-with-gulp-and-webpack/index.html">
+<meta property="og:site_name" content="Y.X. Thinking Collection">
+<meta property="og:description" content="微信小程序的IDE开发、打包📦 流程设计 和 typescript 应用方式 背景要为直播sdk开发微信小程序版，希望通过通用IDE（VSCode、WebStorm）开发，微信小程序开发工具仅作为快速预览工具使用 希望使用Typescript，并且使用Gulp进行代码的处理和移动，在后续过程中发现处理打包关系上的诸多问题，因此在js处理流程中添加Webpack用来处理第三方依赖。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-03-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-04-19T03:47:26.841Z">
+<meta property="article:author" content="杨欣">
+<meta property="article:tag" content="React">
+<meta property="article:tag" content="Webpack">
+<meta property="article:tag" content="Typescript">
+<meta property="article:tag" content="微信小程序">
+<meta property="article:tag" content="Gulp">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://xy1041.github.io/blog/wechat-mini-app-with-gulp-and-webpack/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>使用gulp和webpack开发微信小程序 | Y.X. Thinking Collection</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Y.X. Thinking Collection</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">做了什么要记下来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/wechat-mini-app-with-gulp-and-webpack/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="杨欣">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Y.X. Thinking Collection">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用gulp和webpack开发微信小程序
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-23 00:00:00" itemprop="dateCreated datePublished" datetime="2022-03-23T00:00:00+08:00">2022-03-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-19 11:47:26" itemprop="dateModified" datetime="2022-04-19T11:47:26+08:00">2022-04-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%B0%8F%E7%A8%8B%E5%BA%8F/" itemprop="url" rel="index"><span itemprop="name">小程序</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%B0%8F%E7%A8%8B%E5%BA%8F/React/" itemprop="url" rel="index"><span itemprop="name">React</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>微信小程序的IDE开发、打包📦 流程设计 和 typescript 应用方式</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>要为直播sdk开发微信小程序版，希望通过通用IDE（VSCode、WebStorm）开发，微信小程序开发工具仅作为快速预览工具使用</p>
+<p>希望使用Typescript，并且使用Gulp进行代码的处理和移动，在后续过程中发现处理打包关系上的诸多问题，因此在js处理流程中添加Webpack用来处理第三方依赖。</p>
+<span id="more"></span>   
+
+<h2 id="项目结构"><a href="#项目结构" class="headerlink" title="项目结构"></a>项目结构</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── README.md</span><br><span class="line">├── config // gulp用到的配置文件</span><br><span class="line">│   ├── path.js // 处理路径的方法</span><br><span class="line">│   ├── tsimport.js // 将tsconfig中的paths定义的路径别名替换为相对路径的方法</span><br><span class="line">│   ├── webpack.config.js // gulp的js处理流程中用到的webpack处理的配置文件</span><br><span class="line">│   └── zip.js</span><br><span class="line">├── dist // 打包之后生成的文件夹，微信小程序开发工具打开该文件夹</span><br><span class="line">│   ├── SDK // 生成的SDK文件夹</span><br><span class="line">│   ├── app.js // 小程序主文件</span><br><span class="line">│   ├── app.json // 小程序主文件json</span><br><span class="line">│   ├── app.wxss</span><br><span class="line">│   ├── demo // 小程序业务文件夹</span><br><span class="line">│   └── project.config.json // 小程序配置文件</span><br><span class="line">├── doc // 生成的doc文件夹</span><br><span class="line">├── gulpfile.js // gulp配置文件</span><br><span class="line">├── package.json // 依赖</span><br><span class="line">├── src</span><br><span class="line">│   ├── SDK // sdk文件夹，主要是ts文件</span><br><span class="line">│   ├── app.js // 小程序主文件，直接复制到dist中</span><br><span class="line">│   ├── app.json // 小程序主文件json，直接复制到dist中</span><br><span class="line">│   ├── app.wxss </span><br><span class="line">│   ├── demo // 小程序业务文件夹，直接复制到dist中</span><br><span class="line">│   └── project.config.json // 小程序配置文件，直接复制到dist中</span><br><span class="line">├── tsBuildDir // ts处理中间产物文件夹，从ts翻译成的js文件</span><br><span class="line">├── tsconfig.json // ts配置文件，gulpfile中会用作解析规则</span><br><span class="line">└── typedoc.json // 生成ts的doc文件的配置文件</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="开发过程中的问题"><a href="#开发过程中的问题" class="headerlink" title="开发过程中的问题"></a>开发过程中的问题</h2><h3 id="1-typescript文件不受eslint约束"><a href="#1-typescript文件不受eslint约束" class="headerlink" title="1. typescript文件不受eslint约束"></a>1. typescript文件不受eslint约束</h3><h3 id="解决方案：添加typescript-eslint的import支持"><a href="#解决方案：添加typescript-eslint的import支持" class="headerlink" title="    解决方案：添加typescript-eslint的import支持 "></a><span style="color: orange">    解决方案：添加typescript-eslint的import支持 </span></h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// @file eslintrc.js</span></span><br><span class="line"></span><br><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = &#123;</span><br><span class="line">  <span class="attr">env</span>: &#123;</span><br><span class="line">    <span class="attr">browser</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">es6</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">node</span>: <span class="literal">true</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">extends</span>: [</span><br><span class="line">    <span class="string">&#x27;eslint:recommended&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;plugin:@typescript-eslint/eslint-recommended&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;plugin:@typescript-eslint/recommended&#x27;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">parserOptions</span>: &#123;</span><br><span class="line">    <span class="attr">ecmaVersion</span>: <span class="number">2018</span>,</span><br><span class="line">    <span class="attr">sourceType</span>: <span class="string">&#x27;module&#x27;</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="comment">/** 添加Plugin配置 **/</span></span><br><span class="line">  <span class="attr">plugins</span>: [</span><br><span class="line">    <span class="string">&#x27;import&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;@typescript-eslint&#x27;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">ecmaFeatures</span>: &#123;</span><br><span class="line">    <span class="attr">modules</span>: <span class="literal">true</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">globals</span>: &#123;</span><br><span class="line">    <span class="attr">wx</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="title class_">App</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="title class_">Page</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">getCurrentPages</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">getApp</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="title class_">Component</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">requirePlugin</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">requireMiniProgram</span>: <span class="literal">true</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="comment">// 在import/resolver中添加typescript配置项，使它对typescript文件起效</span></span><br><span class="line">  <span class="attr">settings</span>: &#123;</span><br><span class="line">    <span class="string">&#x27;import/resolver&#x27;</span>: &#123;</span><br><span class="line">      <span class="attr">typescript</span>: &#123;&#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="comment">// 针对ts文件使用parser，并且将tsconfig引入作为project</span></span><br><span class="line">  <span class="attr">overrides</span>: [ </span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">files</span>: <span class="string">&#x27;**/*.ts&#x27;</span>,</span><br><span class="line">      <span class="attr">parser</span>: <span class="string">&#x27;@typescript-eslint/parser&#x27;</span>,</span><br><span class="line">      <span class="attr">parserOptions</span>: &#123;</span><br><span class="line">        <span class="attr">project</span>: <span class="string">&#x27;tsconfig.json&#x27;</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">rules</span>: &#123;</span><br><span class="line">    <span class="string">&#x27;quotes&#x27;</span>: [<span class="string">&#x27;error&#x27;</span>, <span class="string">&#x27;single&#x27;</span>],</span><br><span class="line">    <span class="string">&#x27;semi&#x27;</span>: [<span class="number">2</span>, <span class="string">&#x27;never&#x27;</span>],</span><br><span class="line">    <span class="string">&#x27;max-len&#x27;</span>: [<span class="number">2</span>, <span class="number">250</span>],</span><br><span class="line">    <span class="string">&#x27;import/no-extraneous-dependencies&#x27;</span>: <span class="number">0</span>,</span><br><span class="line">    <span class="string">&#x27;import/prefer-default-export&#x27;</span>: <span class="number">0</span>,</span><br><span class="line">    <span class="string">&#x27;import/extensions&#x27;</span>: <span class="number">0</span>,</span><br><span class="line">    <span class="string">&#x27;@typescript-eslint/no-var-requires&#x27;</span>: <span class="number">0</span>,</span><br><span class="line">    <span class="string">&#x27;@typescript-eslint/triple-slash-reference&#x27;</span>: <span class="number">2</span>, <span class="comment">// @typescript-eslint/triple-slash-reference使用0、1、2作为可选值</span></span><br><span class="line">    <span class="string">&#x27;@typescript-eslint/no-empty-function&#x27;</span>: <span class="number">0</span>, <span class="comment">// 允许空函数存在</span></span><br><span class="line">    <span class="string">&#x27;@typescript-eslint/naming-convention&#x27;</span>: [ <span class="comment">// 命名的规则限制</span></span><br><span class="line">      <span class="number">2</span>,</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="attr">selector</span>: <span class="string">&#x27;typeLike&#x27;</span>, <span class="comment">// 类型类的定义 interface、type等</span></span><br><span class="line">        <span class="attr">format</span>: [<span class="string">&#x27;PascalCase&#x27;</span>], <span class="comment">// 只允许首字母大写的Pascal方式命名</span></span><br><span class="line">      &#125;</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="使用overrides的原因"><a href="#使用overrides的原因" class="headerlink" title="使用overrides的原因"></a>使用overrides的原因</h4><p>如果不限定files，tsconfig.js中将js排除的配置会导致如下错误</p>
+<p><span style="color: red">Parsing error: “parserOptions.project” has been set for @typescript-eslint&#x2F;parser. </span> </p>
+<h3 id="2-小程序不认typescript中的paths"><a href="#2-小程序不认typescript中的paths" class="headerlink" title="2. 小程序不认typescript中的paths"></a>2. 小程序不认typescript中的paths</h3><h3 id="样例："><a href="#样例：" class="headerlink" title="样例："></a>样例：</h3><p>tsconfig文件(隐藏其他配置)</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;compilerOptions&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;paths&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;utils/*&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;src/SDK/utils/*&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;consts/*&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;src/SDK/consts/*&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;components/*&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;src/SDK/components/*&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;api/*&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;src/SDK/apis/*&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;types/*&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;src/SDK/types/*&quot;</span><span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>ts文件的imports</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//@file src/SDK/utils/im/IMEvent.ts</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> &#123;<span class="variable constant_">EVENTS</span>, <span class="variable constant_">IM_ASK_THEME</span>, <span class="variable constant_">LIVE_DELAY_HLS</span>, <span class="variable constant_">STORE_KEYS</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;consts/index&#x27;</span></span><br><span class="line"><span class="keyword">import</span> &#123;get&#125; <span class="keyword">from</span> <span class="string">&#x27;utils/store&#x27;</span></span><br><span class="line"><span class="keyword">import</span> &#123;getUrlToken&#125; <span class="keyword">from</span> <span class="string">&#x27;api/im/user&#x27;</span></span><br><span class="line"><span class="keyword">import</span> &#123;<span class="variable constant_">IM_PROTO_NAMES</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;consts/IMEvents&#x27;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="解决方案：自己写一个将ts中的paths路径引用转化为相对路径的node脚本"><a href="#解决方案：自己写一个将ts中的paths路径引用转化为相对路径的node脚本" class="headerlink" title="    解决方案：自己写一个将ts中的paths路径引用转化为相对路径的node脚本 "></a><span style="color: orange">    解决方案：自己写一个将ts中的paths路径引用转化为相对路径的node脚本 </span></h3><p>脚本文件</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//@file config/tsimport.js</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">&#x27;fs&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">&#x27;path&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> through = <span class="built_in">require</span>(<span class="string">&#x27;through2&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">replacePath</span> = (<span class="params">code, filePath, importOptions</span>) =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> tscpaths = <span class="title class_">Object</span>.<span class="title function_">keys</span>(importOptions.<span class="property">paths</span>) <span class="comment">// 获取tsconfig中的paths配置</span></span><br><span class="line">  <span class="keyword">const</span> lines = code.<span class="title function_">split</span>(<span class="string">&#x27;\n&#x27;</span>) <span class="comment">// 将文件按行分割为数组</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> lines.<span class="title function_">map</span>(<span class="function">(<span class="params">line</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> matches = []</span><br><span class="line">    <span class="keyword">const</span> requireMatches = line.<span class="title function_">match</span>(<span class="regexp">/require\((&#x27;|&quot;)(.*)(&#x27;|&quot;)\)/g</span>) <span class="comment">// 判断是否是require代码</span></span><br><span class="line">    <span class="keyword">const</span> importMatches = line.<span class="title function_">match</span>(<span class="regexp">/import (.*)(&#x27;|&quot;)(.*)(&#x27;|&quot;)/g</span>) <span class="comment">// 判断是否是import代码</span></span><br><span class="line"></span><br><span class="line">    <span class="title class_">Array</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">push</span>.<span class="title function_">apply</span>(matches, requireMatches)</span><br><span class="line">    <span class="title class_">Array</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">push</span>.<span class="title function_">apply</span>(matches, importMatches)</span><br><span class="line"></span><br><span class="line">    matches = matches.<span class="title function_">filter</span>(<span class="function"><span class="params">importLine</span> =&gt;</span> !importLine.<span class="title function_">match</span>(<span class="regexp">/[.+]/g</span>)) <span class="comment">// 过滤出不包含相对路径的代码</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!matches || matches.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> line</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 遍历</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> match <span class="keyword">of</span> matches) &#123;</span><br><span class="line">      <span class="comment">// 找到每一个path</span></span><br><span class="line">      <span class="keyword">let</span> matchAlias = <span class="literal">false</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">const</span> sourcePath = path.<span class="title function_">dirname</span>(filePath) <span class="comment">// 获得文件的机器路径</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">const</span> tscpath <span class="keyword">of</span> tscpaths) &#123;</span><br><span class="line">        <span class="comment">// 寻找导入的模块 &amp; 检查是否在tsconfig的paths配置中</span></span><br><span class="line">        <span class="keyword">const</span> requiredModules = match.<span class="title function_">match</span>(<span class="keyword">new</span> <span class="title class_">RegExp</span>(tscpath, <span class="string">&#x27;g&#x27;</span>))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (requiredModules &amp;&amp; requiredModules.<span class="property">length</span> &gt; <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">for</span> (<span class="keyword">const</span> requiredModule <span class="keyword">of</span> requiredModules) &#123;</span><br><span class="line">            <span class="comment">// 如果在node_modules里的话就跳过</span></span><br><span class="line">            <span class="keyword">const</span> modulePath = path.<span class="title function_">resolve</span>(<span class="string">&#x27;./node_modules/&#x27;</span> + tscpath)</span><br><span class="line">            <span class="keyword">if</span> (fs.<span class="title function_">existsSync</span>(modulePath)) &#123;</span><br><span class="line">              <span class="keyword">continue</span></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 获得相对路径并替换</span></span><br><span class="line">            <span class="keyword">const</span> targetPath = path.<span class="title function_">dirname</span>(path.<span class="title function_">resolve</span>(importOptions.<span class="property">baseUrl</span> + <span class="string">&#x27;/&#x27;</span> + importOptions.<span class="property">paths</span>[tscpath]))</span><br><span class="line">            <span class="keyword">const</span> relativePath = path.<span class="title function_">relative</span>(sourcePath, targetPath)</span><br><span class="line">            line = line.<span class="title function_">replace</span>(<span class="keyword">new</span> <span class="title class_">RegExp</span>(tscpath, <span class="string">&#x27;g&#x27;</span>), <span class="string">&#x27;./&#x27;</span> + relativePath + <span class="string">&#x27;/&#x27;</span>)</span><br><span class="line">            matchAlias = <span class="literal">true</span></span><br><span class="line">            <span class="keyword">return</span> line</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> line</span><br><span class="line">  &#125;).<span class="title function_">join</span>(<span class="string">&#x27;\n&#x27;</span>) <span class="comment">// 重新合并文件</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = <span class="keyword">function</span> (<span class="params">importOptions</span>) &#123;</span><br><span class="line">  <span class="comment">// 使用through.obj处理文件流，并且返回文件流</span></span><br><span class="line">  <span class="keyword">return</span> through.<span class="title function_">obj</span>(<span class="keyword">function</span> (<span class="params">file, enc, cb</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!file.<span class="property">contents</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">let</span> code = file.<span class="property">contents</span>.<span class="title function_">toString</span>(<span class="string">&#x27;utf8&#x27;</span>)</span><br><span class="line">    code = <span class="title function_">replacePath</span>(code, file.<span class="property">history</span>.<span class="title function_">toString</span>(), importOptions)</span><br><span class="line">    file.<span class="property">contents</span> = <span class="title class_">Buffer</span>.<span class="title function_">from</span>(code)</span><br><span class="line">    <span class="variable language_">this</span>.<span class="title function_">push</span>(file)</span><br><span class="line">    <span class="title function_">cb</span>()</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>使用脚本</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">//@file gulpfile.js</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> tsProject = ts.<span class="title function_">createProject</span>(<span class="string">&#x27;tsconfig.json&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> <span class="variable constant_">TS_BUILD_DIR</span> = <span class="string">&#x27;tsBuildDir&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理ts文件的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;ts&#x27;</span>, <span class="function">() =&gt;</span></span><br><span class="line">  tsProject</span><br><span class="line">    .<span class="title function_">src</span>()</span><br><span class="line">    .<span class="title function_">pipe</span>(</span><br><span class="line">      <span class="title function_">tsimport</span>(&#123; ...tsProject.<span class="property">config</span>.<span class="property">compilerOptions</span>, <span class="attr">outDir</span>: <span class="variable constant_">TS_BUILD_DIR</span> &#125;) <span class="comment">// 使用tsimport, 并且将导出的文件路径定义为指定目录，不定义会报错</span></span><br><span class="line">    )</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">tsProject</span>())</span><br><span class="line">    .<span class="property">js</span>.<span class="title function_">pipe</span>(<span class="title function_">preprocess</span>(&#123; <span class="attr">context</span>: envParsed.<span class="property">parsed</span> &#125;))</span><br><span class="line">    .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="variable constant_">TS_BUILD_DIR</span>))</span><br><span class="line">)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-纯gulp-babel无法识别并提取node-modules中的第三方依赖"><a href="#3-纯gulp-babel无法识别并提取node-modules中的第三方依赖" class="headerlink" title="3. 纯gulp+babel无法识别并提取node_modules中的第三方依赖"></a>3. 纯gulp+babel无法识别并提取node_modules中的第三方依赖</h3><h3 id="引申问题：gulp-babel也无法将业务代码中没有引用的部分进行树摇优化（Tree-Shaking）"><a href="#引申问题：gulp-babel也无法将业务代码中没有引用的部分进行树摇优化（Tree-Shaking）" class="headerlink" title="引申问题：gulp+babel也无法将业务代码中没有引用的部分进行树摇优化（Tree Shaking）"></a>引申问题：gulp+babel也无法将业务代码中没有引用的部分进行树摇优化（Tree Shaking）</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// @file src/SDK/utils/im/IMEventBus.ts</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 以下代码在gulp+babel打包下移动到dist中会保持原样，但因为微信开发者工具无法根据这个路径获取rxjs包，所以会报错</span></span><br><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Subject</span>, <span class="title class_">Subscription</span>, filter, <span class="title class_">Observable</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;rxjs&#x27;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="引申问题2：我们需要在微信小程序开发者工具中保持每个文件的位置以方便排查和打包"><a href="#引申问题2：我们需要在微信小程序开发者工具中保持每个文件的位置以方便排查和打包" class="headerlink" title="引申问题2：我们需要在微信小程序开发者工具中保持每个文件的位置以方便排查和打包"></a>引申问题2：我们需要在微信小程序开发者工具中保持每个文件的位置以方便排查和打包</h3><h3 id="解决方案：引入webpack-stream"><a href="#解决方案：引入webpack-stream" class="headerlink" title="    解决方案：引入webpack-stream "></a><span style="color: orange">    解决方案：引入webpack-stream </span></h3><p>关于webpack和gulp的关系，webpack的官方文档说明是这样的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">首先，我们要消除一个常见的误解。webpack是一个模块打包工具(modulebundler)（例如，Browserify或Brunch）。</span><br><span class="line">而不是一个任务执行工具(taskrunner)（例如，Make,Grunt或者Gulp）。</span><br><span class="line">任务执行工具用来自动化处理常见的开发任务，例如，lint(代码检测)、build(构建)、test(测试)。</span><br><span class="line">相比模块打包工具，任务执行工具则聚焦在偏重上层的问题上面。</span><br><span class="line">你仍然可以得益于这种用法：使用上层的工具，而将打包部分的问题留给webpack。</span><br></pre></td></tr></table></figure>
+
+<p>而gulp刚好就是一个任务执行工具</p>
+<p>在gulp中使用的webpack插件就是<a target="_blank" rel="noopener" href="https://github.com/shama/webpack-stream">webpack-stream</a> （ <a target="_blank" rel="noopener" href="https://www.npmjs.com/package/webpack-stream">npm地址</a> ）</p>
+<p>使用webpack-stream不需要单独安装webpack，webpack是该工具的直接依赖，安装webpack-stream之后需要在调用的时候提供一个配置对象，或者以我们熟悉的方式写一个webpack.config.js并以此作为调用时的配置项</p>
+<p>webpack配置文件：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// @file webpack.config.js</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">&#x27;path&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> &#123; glob &#125; = <span class="built_in">require</span>(<span class="string">&#x27;glob&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> <span class="title class_">TerserPlugin</span> = <span class="built_in">require</span>(<span class="string">&#x27;terser-webpack-plugin&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> isPrd = process.<span class="property">env</span>.<span class="property">NODE_ENV</span> === <span class="string">&#x27;production&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取一个所有ts生成的js的chunk配置数组</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">getEntries</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> map = &#123;&#125;</span><br><span class="line">  <span class="keyword">const</span> entryFiles = glob.<span class="title function_">sync</span>(<span class="string">&#x27;./tsBuildDir/**/*.js&#x27;</span>) <span class="comment">// 遍历出tsBuildDir下的所有js文件地址</span></span><br><span class="line"></span><br><span class="line">  entryFiles.<span class="title function_">forEach</span>(<span class="function"><span class="params">filepath</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> fileDir = <span class="regexp">/.\/tsBuildDir\/(.*?)\.js/</span>.<span class="title function_">exec</span>(filepath) <span class="comment">// 获取tsBuildDir往下的相对路径</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 用该相对路径作为key，生成对应的chunk的配置作为value</span></span><br><span class="line">    map[fileDir[<span class="number">1</span>]] = &#123;</span><br><span class="line">      <span class="attr">test</span>: <span class="keyword">new</span> <span class="title class_">RegExp</span>(filepath),</span><br><span class="line">      <span class="attr">name</span>: fileDir[<span class="number">1</span>],</span><br><span class="line">      <span class="attr">enforce</span>: <span class="literal">true</span>,</span><br><span class="line">      <span class="attr">priority</span>: <span class="number">90</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">return</span> map</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = &#123;</span><br><span class="line">  <span class="attr">mode</span>: <span class="string">&#x27;production&#x27;</span>,</span><br><span class="line">  <span class="attr">target</span>: <span class="string">&#x27;node&#x27;</span>,</span><br><span class="line">  <span class="attr">entry</span>: &#123; <span class="comment">// 因为业务要求，我们要打包出来的js有两个入口调用，所以要用两个entry进行</span></span><br><span class="line">    <span class="string">&#x27;Player/index&#x27;</span>: <span class="string">&#x27;./tsBuildDir/Player/index.js&#x27;</span>,</span><br><span class="line">    <span class="attr">index</span>: &#123;</span><br><span class="line">      <span class="attr">import</span>: <span class="string">&#x27;./tsBuildDir/index.js&#x27;</span>,</span><br><span class="line">      <span class="attr">library</span>: &#123;</span><br><span class="line">        <span class="attr">type</span>: <span class="string">&#x27;commonjs2&#x27;</span> <span class="comment">// 有点迷，其他type都用过了，只有这个才行，commonjs包括umd都会无法require其他的依赖包</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">output</span>: &#123;</span><br><span class="line">    <span class="attr">filename</span>: <span class="string">&#x27;[name].js&#x27;</span>, <span class="comment">// name可以是带有&#x27;/&#x27;的形式，这样的output会生成该文件夹下的文件</span></span><br><span class="line">    <span class="attr">path</span>: path.<span class="title function_">resolve</span>(__dirname, <span class="string">&#x27;dist&#x27;</span>)</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">optimization</span>: &#123;</span><br><span class="line">    <span class="attr">sideEffects</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">minimize</span>: isPrd,</span><br><span class="line">    <span class="attr">minimizer</span>: [</span><br><span class="line">      <span class="keyword">new</span> <span class="title class_">TerserPlugin</span>(&#123;</span><br><span class="line">        <span class="attr">extractComments</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="attr">terserOptions</span>: &#123;</span><br><span class="line">          <span class="attr">compress</span>: &#123;</span><br><span class="line">            <span class="attr">warnings</span>: <span class="literal">false</span>,</span><br><span class="line">            <span class="attr">comparisons</span>: <span class="literal">false</span>,</span><br><span class="line">            <span class="attr">inline</span>: <span class="number">2</span>,</span><br><span class="line">            <span class="attr">drop_console</span>: isPrd</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;)</span><br><span class="line">    ],</span><br><span class="line">    <span class="comment">// 为了让两个entry的运行时（即生成的实例）在同一个空间内可以互通，需要设置runtimeChunk配置</span></span><br><span class="line">    <span class="attr">runtimeChunk</span>: &#123;</span><br><span class="line">      <span class="attr">name</span>: <span class="string">&#x27;runtime&#x27;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="comment">// 实现保持webpack处理之后的js和之前的js的文件结构保持一致的重要配置，用splitChunk将每个文件都作为单独的chunk处理</span></span><br><span class="line">    <span class="attr">splitChunks</span>: &#123;</span><br><span class="line">      <span class="attr">chunks</span>: <span class="string">&#x27;all&#x27;</span>,</span><br><span class="line">      <span class="attr">minSize</span>: <span class="number">0</span>,</span><br><span class="line">      <span class="attr">minSizeReduction</span>: <span class="number">0</span>,</span><br><span class="line">      <span class="attr">cacheGroups</span>: &#123;</span><br><span class="line">        <span class="comment">// 第三方全部打到vendor里，这个过程中会自动树摇，将第三方依赖中没有用到的部分去除</span></span><br><span class="line">        <span class="attr">vendor</span>: &#123;</span><br><span class="line">          <span class="attr">test</span>: <span class="regexp">/[\\/]node_modules[\\/]/</span>,</span><br><span class="line">          <span class="attr">name</span>: <span class="string">&#x27;vendor&#x27;</span>,</span><br><span class="line">          <span class="attr">enforce</span>: <span class="literal">true</span>, <span class="comment">// 强制打包，无视大小和共用要求</span></span><br><span class="line">          <span class="attr">priority</span>: <span class="number">90</span></span><br><span class="line">        &#125;,</span><br><span class="line">        ...<span class="title function_">getEntries</span>()</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>使用配置</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// @file gulpfile.js</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理js文件的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;js&#x27;</span>, <span class="function">() =&gt;</span></span><br><span class="line">  gulp</span><br><span class="line">    .<span class="title function_">src</span>([<span class="string">`<span class="subst">$&#123;TS_BUILD_DIR&#125;</span>/**/*.js`</span>, <span class="string">`src/<span class="subst">$&#123;SDK_DIR&#125;</span>/**/*.js`</span>])</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">babel</span>())</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">webpack</span>(<span class="built_in">require</span>(<span class="string">&#x27;./config/webpack.config.js&#x27;</span>)))</span><br><span class="line">    .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="variable constant_">BUILD_SDK_DIR</span>))</span><br><span class="line">)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="gulpfile文件"><a href="#gulpfile文件" class="headerlink" title="gulpfile文件"></a>gulpfile文件</h2><h4 id="gulp文件"><a href="#gulp文件" class="headerlink" title="gulp文件"></a>gulp文件</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// ... 依赖import等</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> tsProject = ts.<span class="title function_">createProject</span>(<span class="string">&#x27;tsconfig.json&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> <span class="variable constant_">TS_BUILD_DIR</span> = <span class="string">&#x27;tsBuildDir&#x27;</span></span><br><span class="line"><span class="keyword">const</span> <span class="variable constant_">SDK_DIR</span> = <span class="string">&#x27;SDK&#x27;</span></span><br><span class="line"><span class="keyword">const</span> <span class="variable constant_">BUILD_SDK_DIR</span> = <span class="string">`dist/<span class="subst">$&#123;SDK_DIR&#125;</span>`</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> envParsed = dotenv.<span class="title function_">config</span>(&#123;</span><br><span class="line">  <span class="attr">path</span>: <span class="title function_">resolvePath</span>(<span class="string">`./.env.<span class="subst">$&#123;process.env.NODE_ENV&#125;</span>`</span>)</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> isProd = process.<span class="property">env</span>.<span class="property">NODE_ENV</span> !== <span class="string">&#x27;development&#x27;</span></span><br><span class="line"><span class="comment">// 版本号</span></span><br><span class="line"><span class="keyword">const</span> version = isProd</span><br><span class="line">  ? shell.<span class="title function_">exec</span>(<span class="string">&#x27;git describe --abbrev=0&#x27;</span>).<span class="property">stdout</span>.<span class="title function_">trim</span>()</span><br><span class="line">  : <span class="literal">null</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> extraArray = [</span><br><span class="line">  <span class="string">&#x27;src/**/*.*&#x27;</span>,</span><br><span class="line">  <span class="string">&#x27;!src/**/*.&#123;wxml,xml,html,wxss,json,css,less,jpg,jpeg,png,gif,svg&#125;&#x27;</span>,</span><br><span class="line">  <span class="string">`!src/<span class="subst">$&#123;SDK_DIR&#125;</span>/**/*.js`</span>,</span><br><span class="line">  <span class="string">`!src/<span class="subst">$&#123;SDK_DIR&#125;</span>/**/*.ts`</span></span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理ts文件的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;ts&#x27;</span>, <span class="function">() =&gt;</span></span><br><span class="line">  tsProject</span><br><span class="line">    .<span class="title function_">src</span>()</span><br><span class="line">    .<span class="title function_">pipe</span>(</span><br><span class="line">      <span class="title function_">tsimport</span>(&#123; ...tsProject.<span class="property">config</span>.<span class="property">compilerOptions</span>, <span class="attr">outDir</span>: <span class="variable constant_">TS_BUILD_DIR</span> &#125;) <span class="comment">// 使用tsimport</span></span><br><span class="line">    )</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">tsProject</span>())</span><br><span class="line">    .<span class="property">js</span>.<span class="title function_">pipe</span>(<span class="title function_">preprocess</span>(&#123; <span class="attr">context</span>: envParsed.<span class="property">parsed</span> &#125;))</span><br><span class="line">    .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="variable constant_">TS_BUILD_DIR</span>))</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理js文件的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;js&#x27;</span>, <span class="function">() =&gt;</span></span><br><span class="line">  gulp</span><br><span class="line">    .<span class="title function_">src</span>([<span class="string">`<span class="subst">$&#123;TS_BUILD_DIR&#125;</span>/**/*.js`</span>, <span class="string">`src/<span class="subst">$&#123;SDK_DIR&#125;</span>/**/*.js`</span>])</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">babel</span>())</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">webpack</span>(<span class="built_in">require</span>(<span class="string">&#x27;./config/webpack.config.js&#x27;</span>)))</span><br><span class="line">    .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="variable constant_">BUILD_SDK_DIR</span>))</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理小程序用的类html文件的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;wxml&#x27;</span>, <span class="function">() =&gt;</span></span><br><span class="line">  gulp</span><br><span class="line">    .<span class="title function_">src</span>([<span class="string">&#x27;src/**/*.&#123;wxml,xml,html&#125;&#x27;</span>])</span><br><span class="line">    .<span class="title function_">pipe</span>(</span><br><span class="line">      <span class="title function_">htmlmin</span>(&#123;</span><br><span class="line">        <span class="attr">collapseWhitespace</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="attr">caseSensitive</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="attr">includeAutoGeneratedTags</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="attr">keepClosingSlash</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="attr">removeComments</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="attr">removeEmptyAttributes</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="attr">removeScriptTypeAttributes</span>: <span class="literal">true</span>,</span><br><span class="line">        <span class="attr">removeStyleLinkTypeAttributes</span>: <span class="literal">true</span></span><br><span class="line">      &#125;)</span><br><span class="line">    )</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">rename</span>(&#123; <span class="attr">extname</span>: <span class="string">&#x27;.wxml&#x27;</span> &#125;))</span><br><span class="line">    .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="string">&#x27;dist&#x27;</span>))</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理小程序用的类css文件的流程</span></span><br><span class="line"></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;wxss&#x27;</span>, <span class="function">() =&gt;</span></span><br><span class="line">  gulp</span><br><span class="line">    .<span class="title function_">src</span>([<span class="string">&#x27;src/**/*.&#123;less,wxss,css&#125;&#x27;</span>])</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">less</span>())</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">postcss</span>([<span class="title function_">pxtorpx</span>()]))</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">gulpif</span>(isProd, <span class="title function_">postcss</span>([<span class="title function_">cssnano</span>()])))</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">rename</span>(&#123; <span class="attr">extname</span>: <span class="string">&#x27;.wxss&#x27;</span> &#125;))</span><br><span class="line">    .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="string">&#x27;dist&#x27;</span>))</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理json文件的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;json&#x27;</span>, <span class="function">() =&gt;</span></span><br><span class="line">  gulp</span><br><span class="line">    .<span class="title function_">src</span>([<span class="string">&#x27;src/**/*.json&#x27;</span>])</span><br><span class="line">    .<span class="title function_">pipe</span>(<span class="title function_">gulpif</span>(isProd, <span class="title function_">jsonminify</span>()))</span><br><span class="line">    .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="string">&#x27;dist&#x27;</span>))</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理静态图片文件的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;image&#x27;</span>, <span class="function">() =&gt;</span></span><br><span class="line">  gulp</span><br><span class="line">    .<span class="title function_">src</span>([<span class="string">&#x27;src/**/*.&#123;jpg,jpeg,png,gif,svg&#125;&#x27;</span>])</span><br><span class="line">    <span class="comment">// .pipe(gulpif(isProd, imagemin()))</span></span><br><span class="line">    .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="string">&#x27;dist&#x27;</span>))</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理额外的指定文件的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(</span><br><span class="line">  <span class="string">&#x27;extras&#x27;</span>,</span><br><span class="line">  gulp.<span class="title function_">parallel</span>(</span><br><span class="line">    <span class="function">() =&gt;</span> gulp.<span class="title function_">src</span>(extraArray).<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="string">&#x27;dist&#x27;</span>)),</span><br><span class="line">    <span class="function">() =&gt;</span></span><br><span class="line">      gulp</span><br><span class="line">        .<span class="title function_">src</span>(<span class="string">&#x27;src/SDK/assets/**/*.js&#x27;</span>) <span class="comment">// 这里额外的js可能被前面的webpack的treeShaking给去掉，需要额外操作一步</span></span><br><span class="line">        .<span class="title function_">pipe</span>(<span class="title function_">gulpif</span>(isProd, <span class="title function_">uglify</span>()))</span><br><span class="line">        .<span class="title function_">pipe</span>(gulp.<span class="title function_">dest</span>(<span class="string">&#x27;dist/SDK/assets&#x27;</span>))</span><br><span class="line">  )</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清理dist文件夹和tsbuilderDir文件夹的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;clean&#x27;</span>, <span class="function"><span class="params">cb</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="title function_">del</span>([<span class="string">&#x27;dist/*&#x27;</span>, <span class="string">`<span class="subst">$&#123;TS_BUILD_DIR&#125;</span>/*`</span>])</span><br><span class="line">  <span class="title function_">cb</span>()</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 运行build时的运行流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(</span><br><span class="line">  <span class="string">&#x27;build&#x27;</span>,</span><br><span class="line">  gulp.<span class="title function_">series</span>( <span class="comment">// 按照顺序运行如下流程</span></span><br><span class="line">    <span class="string">&#x27;clean&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;ts&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;js&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;wxml&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;wxss&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;json&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;image&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;extras&#x27;</span>,</span><br><span class="line">    <span class="function"><span class="params">done</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (isProd) &#123;</span><br><span class="line">        <span class="comment">// 如果是正式环境build的话就进行zip打包</span></span><br><span class="line">        <span class="title function_">generateZip</span>(version)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="title function_">done</span>()</span><br><span class="line">    &#125;</span><br><span class="line">  )</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 本地运行时的流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(</span><br><span class="line">  <span class="string">&#x27;watch&#x27;</span>,</span><br><span class="line">  gulp.<span class="title function_">series</span>(<span class="string">&#x27;build&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    gulp.<span class="title function_">watch</span>(<span class="string">`src/<span class="subst">$&#123;SDK_DIR&#125;</span>/**/*.ts`</span>, gulp.<span class="title function_">series</span>(<span class="string">&#x27;ts&#x27;</span>))</span><br><span class="line">    gulp.<span class="title function_">watch</span>(</span><br><span class="line">      [<span class="string">`<span class="subst">$&#123;TS_BUILD_DIR&#125;</span>/**/*.js`</span>, <span class="string">`src/<span class="subst">$&#123;SDK_DIR&#125;</span>/**/*.js`</span>],</span><br><span class="line">      gulp.<span class="title function_">series</span>(<span class="string">&#x27;js&#x27;</span>)</span><br><span class="line">    )</span><br><span class="line">    gulp.<span class="title function_">watch</span>(<span class="string">&#x27;src/**/*.&#123;wxml,xml,html&#125;&#x27;</span>, gulp.<span class="title function_">series</span>(<span class="string">&#x27;wxml&#x27;</span>))</span><br><span class="line">    gulp.<span class="title function_">watch</span>(<span class="string">&#x27;src/**/*.&#123;less,wxss,css&#125;&#x27;</span>, gulp.<span class="title function_">series</span>(<span class="string">&#x27;wxss&#x27;</span>))</span><br><span class="line">    gulp.<span class="title function_">watch</span>(<span class="string">&#x27;src/**/*.json&#x27;</span>, gulp.<span class="title function_">series</span>(<span class="string">&#x27;json&#x27;</span>))</span><br><span class="line">    gulp.<span class="title function_">watch</span>(<span class="string">&#x27;src/**/*.&#123;jpg,jpeg,png,gif,svg&#125;&#x27;</span>, gulp.<span class="title function_">series</span>(<span class="string">&#x27;image&#x27;</span>))</span><br><span class="line">    gulp.<span class="title function_">watch</span>(extraArray, gulp.<span class="title function_">series</span>(<span class="string">&#x27;extras&#x27;</span>))</span><br><span class="line">  &#125;)</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 默认运行watch流程</span></span><br><span class="line">gulp.<span class="title function_">task</span>(<span class="string">&#x27;default&#x27;</span>, gulp.<span class="title function_">series</span>(<span class="string">&#x27;watch&#x27;</span>))</span><br></pre></td></tr></table></figure>
+
+<p>使用gulp脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">// 本地运行</span><br><span class="line">cross-env NODE_ENV=development gulp watch</span><br><span class="line"></span><br><span class="line">// 打包</span><br><span class="line">cross-env NODE_ENV=production gulp build</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="后续优化"><a href="#后续优化" class="headerlink" title="后续优化"></a>后续优化</h2><ul>
+<li>ts到js之后的中转文件夹tsBuildDir是否可以省去</li>
+<li>智能生成文档（已经使用 <a target="_blank" rel="noopener" href="https://www.npmjs.com/package/typedoc">typedoc</a> 实现）</li>
+<li>我们编写的js文件如果import某个文件夹的话会载入这个文件夹下的index.js作为默认行为，但是小程序开发者只会找’文件夹名称.js’，ts同理，如何编写的时候按照常见逻辑编写但是可以让小程序开发者工具识别</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/React/" rel="tag"># React</a>
+              <a href="/blog/tags/Webpack/" rel="tag"># Webpack</a>
+              <a href="/blog/tags/Typescript/" rel="tag"># Typescript</a>
+              <a href="/blog/tags/%E5%BE%AE%E4%BF%A1%E5%B0%8F%E7%A8%8B%E5%BA%8F/" rel="tag"># 微信小程序</a>
+              <a href="/blog/tags/Gulp/" rel="tag"># Gulp</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/localstorage-request/" rel="prev" title="通过 LocalStorage 实现的 跨浏览器页签通信机制">
+      <i class="fa fa-chevron-left"></i> 通过 LocalStorage 实现的 跨浏览器页签通信机制
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/update-react-router-v6/" rel="next" title="更新react-router和react-router-dom到v6">
+      更新react-router和react-router-dom到v6 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">项目结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">3.</span> <span class="nav-text">开发过程中的问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-typescript%E6%96%87%E4%BB%B6%E4%B8%8D%E5%8F%97eslint%E7%BA%A6%E6%9D%9F"><span class="nav-number">3.1.</span> <span class="nav-text">1. typescript文件不受eslint约束</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%EF%BC%9A%E6%B7%BB%E5%8A%A0typescript-eslint%E7%9A%84import%E6%94%AF%E6%8C%81"><span class="nav-number">3.2.</span> <span class="nav-text">    解决方案：添加typescript-eslint的import支持 </span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8overrides%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="nav-number">3.2.1.</span> <span class="nav-text">使用overrides的原因</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%B0%8F%E7%A8%8B%E5%BA%8F%E4%B8%8D%E8%AE%A4typescript%E4%B8%AD%E7%9A%84paths"><span class="nav-number">3.3.</span> <span class="nav-text">2. 小程序不认typescript中的paths</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B7%E4%BE%8B%EF%BC%9A"><span class="nav-number">3.4.</span> <span class="nav-text">样例：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%EF%BC%9A%E8%87%AA%E5%B7%B1%E5%86%99%E4%B8%80%E4%B8%AA%E5%B0%86ts%E4%B8%AD%E7%9A%84paths%E8%B7%AF%E5%BE%84%E5%BC%95%E7%94%A8%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%9B%B8%E5%AF%B9%E8%B7%AF%E5%BE%84%E7%9A%84node%E8%84%9A%E6%9C%AC"><span class="nav-number">3.5.</span> <span class="nav-text">    解决方案：自己写一个将ts中的paths路径引用转化为相对路径的node脚本 </span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%BA%AFgulp-babel%E6%97%A0%E6%B3%95%E8%AF%86%E5%88%AB%E5%B9%B6%E6%8F%90%E5%8F%96node-modules%E4%B8%AD%E7%9A%84%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96"><span class="nav-number">3.6.</span> <span class="nav-text">3. 纯gulp+babel无法识别并提取node_modules中的第三方依赖</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E7%94%B3%E9%97%AE%E9%A2%98%EF%BC%9Agulp-babel%E4%B9%9F%E6%97%A0%E6%B3%95%E5%B0%86%E4%B8%9A%E5%8A%A1%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%B2%A1%E6%9C%89%E5%BC%95%E7%94%A8%E7%9A%84%E9%83%A8%E5%88%86%E8%BF%9B%E8%A1%8C%E6%A0%91%E6%91%87%E4%BC%98%E5%8C%96%EF%BC%88Tree-Shaking%EF%BC%89"><span class="nav-number">3.7.</span> <span class="nav-text">引申问题：gulp+babel也无法将业务代码中没有引用的部分进行树摇优化（Tree Shaking）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E7%94%B3%E9%97%AE%E9%A2%982%EF%BC%9A%E6%88%91%E4%BB%AC%E9%9C%80%E8%A6%81%E5%9C%A8%E5%BE%AE%E4%BF%A1%E5%B0%8F%E7%A8%8B%E5%BA%8F%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7%E4%B8%AD%E4%BF%9D%E6%8C%81%E6%AF%8F%E4%B8%AA%E6%96%87%E4%BB%B6%E7%9A%84%E4%BD%8D%E7%BD%AE%E4%BB%A5%E6%96%B9%E4%BE%BF%E6%8E%92%E6%9F%A5%E5%92%8C%E6%89%93%E5%8C%85"><span class="nav-number">3.8.</span> <span class="nav-text">引申问题2：我们需要在微信小程序开发者工具中保持每个文件的位置以方便排查和打包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%EF%BC%9A%E5%BC%95%E5%85%A5webpack-stream"><span class="nav-number">3.9.</span> <span class="nav-text">    解决方案：引入webpack-stream </span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gulpfile%E6%96%87%E4%BB%B6"><span class="nav-number">4.</span> <span class="nav-text">gulpfile文件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#gulp%E6%96%87%E4%BB%B6"><span class="nav-number">4.0.1.</span> <span class="nav-text">gulp文件</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E7%BB%AD%E4%BC%98%E5%8C%96"><span class="nav-number">5.</span> <span class="nav-text">后续优化</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨欣</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨欣</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

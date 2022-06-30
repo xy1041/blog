@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"xy1041.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="基于业务需要，需要自己实现一个在鼠标点击处弹出一个popup组件然后点击选择上传方式并弹出弹窗进行操作的功能">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实现一个可以在点击处弹出的popup组件的功能">
+<meta property="og:url" content="https://xy1041.github.io/blog/create-popup-anywhere/index.html">
+<meta property="og:site_name" content="Y.X. Thinking Collection">
+<meta property="og:description" content="基于业务需要，需要自己实现一个在鼠标点击处弹出一个popup组件然后点击选择上传方式并弹出弹窗进行操作的功能">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-10-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-04-19T03:47:26.838Z">
+<meta property="article:author" content="杨欣">
+<meta property="article:tag" content="Javascript">
+<meta property="article:tag" content="React">
+<meta property="article:tag" content="Hooks">
+<meta property="article:tag" content="popup">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://xy1041.github.io/blog/create-popup-anywhere/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>实现一个可以在点击处弹出的popup组件的功能 | Y.X. Thinking Collection</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Y.X. Thinking Collection</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">做了什么要记下来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/create-popup-anywhere/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="杨欣">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Y.X. Thinking Collection">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          实现一个可以在点击处弹出的popup组件的功能
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-10-28 00:00:00" itemprop="dateCreated datePublished" datetime="2021-10-28T00:00:00+08:00">2021-10-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-19 11:47:26" itemprop="dateModified" datetime="2022-04-19T11:47:26+08:00">2022-04-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E9%80%A0%E8%BD%AE%E5%AD%90/" itemprop="url" rel="index"><span itemprop="name">造轮子</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>基于业务需要，需要自己实现一个在鼠标点击处弹出一个popup组件然后点击选择上传方式并弹出弹窗进行操作的功能</p>
+</blockquote>
+<span id="more"></span>   
+
+<h2 id="业务要求"><a href="#业务要求" class="headerlink" title="业务要求"></a>业务要求</h2><p>需要在B端(React框架)和C端（Vue框架）实现一个功能相同的上传组件，该上传组件具备以下功能：</p>
+<ul>
+<li>点击指定区域（通常是上传按钮）时，弹出一个如图的popup弹窗，供用户选择上传方式<br/>   
+![popup图](assets/images/popup.png)   
+<br/></li>
+<li>点击”素材库选择”时，打开一个网盘选择窗口，在其中选择某个符合业务要求的文件，并将文件信息返回给业务系统</li>
+<li>点击”本地上传”时，先打开文件选择窗口，选择本地文件上传，并在上传完成之后选择是否要同步到素材库中，如果是单个图片就进行尺寸裁切（裁切比例按照业务系统传入的参数确定），裁切后进行上传再选择是否要同步到素材库</li>
+<li>需要框架不同的两个端均可以实现相同功能，样式和逻辑完全一致</li>
+</ul>
+<h2 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h2><p>在该功能之前，已经因为之前的需求实现了在指定容器中渲染一个网盘文件管理器（带有查看、上传、编辑、删除文件或文件夹功能）的react为基础的sdk，因此该次应考虑在该sdk基础上添加新的方法来实现该功能，同时这样也能保证多端的统一性和后续维护的简便性</p>
+<h2 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h2><h3 id="1、实现将react项目打入一个sdk中供人引用"><a href="#1、实现将react项目打入一个sdk中供人引用" class="headerlink" title="1、实现将react项目打入一个sdk中供人引用"></a>1、实现将react项目打入一个sdk中供人引用</h3><p>该部分之前已经实现过，具体方式为将一个React项目的初始化部分作成一个构造器函数， 并在webpack打包配置中将该函数作为入口打包到单一文件中，页面通过载入该文件（可以通过js引入或npm的import方式），<br>将构造器函数挂载到window对象上，在需要使用时将容器元素和其他sdk内部要求的参数作为新建实例的参数实例化， 实例化过程中会自动将该React项目初始化在指定的容器上</p>
+<p>入口文件例：</p>
+<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"> <span class="keyword">class</span> <span class="title class_">SDKName</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params">options</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">options</span> = options</span><br><span class="line">    <span class="comment">// ... 业务操作</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="title function_">_init</span>()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">_init</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="comment">// ...业务操作</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">options</span>.<span class="property">container</span> &amp;&amp; <span class="variable language_">this</span>.<span class="title function_">_initDom</span>()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">_initDom</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="comment">// ... 业务操作</span></span><br><span class="line">    <span class="title class_">ReactDOM</span>.<span class="title function_">render</span>(<span class="language-xml"><span class="tag">&lt;<span class="name">App</span> &#123;<span class="attr">...this.options</span>&#125; /&gt;</span></span>, <span class="variable language_">this</span>.<span class="property">container</span>) <span class="comment">// app组件是React组件</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">unmount</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">options</span>.<span class="property">container</span> &amp;&amp; <span class="title class_">ReactDOM</span>.<span class="title function_">unmountComponentAtNode</span>(<span class="variable language_">this</span>.<span class="property">options</span>.<span class="property">container</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="title class_">SDKName</span></span><br></pre></td></tr></table></figure>
+
+<p>webpack配置文件例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> options = &#123;</span><br><span class="line">  <span class="attr">entry</span>: &#123;</span><br><span class="line">    <span class="title class_">SDKName</span>: <span class="string">&#x27;./src/index.js&#x27;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">output</span>: &#123;</span><br><span class="line">    <span class="comment">// ...其他配置</span></span><br><span class="line">    <span class="attr">filename</span>: <span class="string">&#x27;[name].min.js&#x27;</span>,</span><br><span class="line">    <span class="attr">library</span>: <span class="string">&#x27;SDKName&#x27;</span>,</span><br><span class="line">    <span class="attr">libraryTarget</span>: <span class="string">&#x27;window&#x27;</span>,</span><br><span class="line">    <span class="attr">libraryExport</span>: <span class="string">&#x27;default&#x27;</span>,</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ... 其他常规配置</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这样便能实现打包时生成一个SDKName.min.js的文件，并且该文件载入之后会将SDKName这个class类挂载到window对象上，以供调用</p>
+<p>使用例：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;https://someWebSite.com/SDKName.min.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">&quot;root&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">  <span class="keyword">const</span> sdk = <span class="keyword">new</span> <span class="title class_">SDKName</span>(&#123;</span></span><br><span class="line"><span class="language-javascript">    <span class="attr">container</span>: <span class="variable language_">document</span>.<span class="title function_">querySelector</span>(<span class="string">&#x27;#root&#x27;</span>)</span></span><br><span class="line"><span class="language-javascript">    <span class="comment">// ...其他参数</span></span></span><br><span class="line"><span class="language-javascript">  &#125;)</span></span><br><span class="line"><span class="language-javascript"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2、实现点击特定元素弹出由SDK控制的弹出菜单"><a href="#2、实现点击特定元素弹出由SDK控制的弹出菜单" class="headerlink" title="2、实现点击特定元素弹出由SDK控制的弹出菜单"></a>2、实现点击特定元素弹出由SDK控制的弹出菜单</h3><p>实现思路：应当向SDK对象上挂载两个方法，一个可以在指定的容器*里渲染弹出菜单，一个可以由外部主动删除渲染的菜单</p>
+<p>*指定的容器主要是针对弹出菜单后页面会有上下滚动的需求而设定（参考了ant-design的设计），实际上渲染的菜单的页面相对位置是由传入组件的点击事件event的点击位置决定的</p>
+<p>挂载渲染和卸载菜单方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SDKName</span> &#123;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// ...其他属性和方法</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@description</span> 销毁已经渲染的选择上传方式</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="title function_">unmountSelection</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">uploadSelectorContainer</span>) &#123;</span><br><span class="line">      <span class="title class_">ReactDOM</span>.<span class="title function_">unmountComponentAtNode</span>(<span class="variable language_">this</span>.<span class="property">uploadSelectorContainer</span>)</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">uploadSelectorContainer</span>.<span class="property">parentNode</span>.<span class="title function_">removeChild</span>(<span class="variable language_">this</span>.<span class="property">uploadSelectorContainer</span>)</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">uploadSelectorContainer</span> = <span class="literal">null</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@description</span> 展示上传选择框，目前有两个选项：从本地选择上传、从素材库选择</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param</span> &#123;<span class="type">string[]</span>&#125; types: 支持的上传类型</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param</span> &#123;<span class="type">MouseEvent</span>&#125; event: 鼠标点击事件，用于定位弹出框</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param</span> &#123;<span class="type">() =&gt; HTMLElement</span>&#125; getPopupContainer: 获得滚动用的参考容器</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@return</span> &#123;<span class="type">&#123;unmount: function, eventEmitter: Subject</span>&#125;&#125; 返回unmount方法和eventEmitter事件触发器</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="title function_">showUploadSelection</span>(<span class="params">&#123;types, event, getPopupContainer&#125;</span>) &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;=============参数：&#x27;</span>, types, event, getPopupContainer)</span><br><span class="line">    <span class="keyword">if</span> (event.<span class="property">target</span>) &#123;</span><br><span class="line">      <span class="comment">// 判断是否是在已经渲染的菜单内进行二次点击</span></span><br><span class="line">      </span><br><span class="line">      <span class="keyword">if</span> (<span class="title function_">isClickSelf</span>(event)) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;=============点击在组件内，不处理&#x27;</span>, event)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 渲染之前先卸载之前渲染的菜单</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="title function_">unmountSelection</span>()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> newUploadSelectorContainer = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;div&#x27;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 使用预定的字符串作为容器元素的id</span></span><br><span class="line">    newUploadSelectorContainer.<span class="property">id</span> = <span class="variable constant_">SELECTOR_CONTAINER_ID</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果不传入getPopupContainer就选择document.body作为容器插入的父节点</span></span><br><span class="line">    <span class="keyword">const</span> parent = getPopupContainer ? <span class="title function_">getPopupContainer</span>() : <span class="variable language_">document</span>.<span class="property">body</span></span><br><span class="line">    </span><br><span class="line">    parent.<span class="title function_">appendChild</span>(newUploadSelectorContainer)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 在容器上渲染菜单组件</span></span><br><span class="line">    <span class="title class_">ReactDOM</span>.<span class="title function_">render</span>(<span class="language-xml"><span class="tag">&lt;<span class="name">UploadSelector</span> <span class="attr">event</span>=<span class="string">&#123;event&#125;</span> <span class="attr">types</span>=<span class="string">&#123;types&#125;</span> <span class="attr">container</span>=<span class="string">&#123;parent&#125;/</span>&gt;</span></span>, newUploadSelectorContainer)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将容器节点保存在sdk内</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">uploadSelectorContainer</span> = newUploadSelectorContainer</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="attr">unmount</span>: <span class="variable language_">this</span>.<span class="property">unmountSelection</span>, <span class="attr">eventEmitter</span>: uploadSelectionSubject&#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就可以实现在任意html节点上挂载和销毁我们的弹出菜单，但是弹出菜单的位置应当是点击事件的位置，所以UploadSelector组件内部需要对event做处理</p>
+<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="title class_">React</span>, &#123;useEffect, useState&#125; <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Button</span>, <span class="title class_">Modal</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;antd&#x27;</span></span><br><span class="line"><span class="keyword">import</span> s <span class="keyword">from</span> <span class="string">&#x27;./index.module.less&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> selectionIdealHeight = <span class="number">96</span></span><br><span class="line"><span class="keyword">const</span> selectionIdealWidth = <span class="number">126</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">UploadSelector</span> = (<span class="params">&#123;container, event, types&#125;</span>) =&gt; &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> [style, setStyle] = <span class="title function_">useState</span>(&#123;&#125;)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> [selectorVisible, setSelectorVisible] = <span class="title function_">useState</span>(<span class="literal">false</span>)</span><br><span class="line">  </span><br><span class="line">  <span class="title function_">useEffect</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取渲染容器的文档内位置</span></span><br><span class="line">    <span class="keyword">const</span> rect = container.<span class="title function_">getBoundingClientRect</span>()</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算event点击和rect之间的相位置，并且将容器的style中的left和top值计算出来</span></span><br><span class="line">    <span class="keyword">let</span> left = <span class="title class_">Math</span>.<span class="title function_">max</span>(<span class="number">0</span>, event.<span class="property">clientX</span> - rect.<span class="property">x</span>)</span><br><span class="line">    <span class="keyword">let</span> top = <span class="title class_">Math</span>.<span class="title function_">max</span>(<span class="number">0</span>, event.<span class="property">clientY</span> - rect.<span class="property">y</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获得window的宽高</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">const</span> windowHeight = <span class="variable language_">window</span>.<span class="property">innerHeight</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> windowWidth = <span class="variable language_">window</span>.<span class="property">innerWidth</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 判断菜单向左展开还是向右展开</span></span><br><span class="line">    <span class="keyword">if</span> (windowHeight - event.<span class="property">clientY</span> &lt; selectionIdealHeight) &#123;</span><br><span class="line">      top -= selectionIdealHeight</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 判断菜单向下展开还是向上展开</span></span><br><span class="line">    <span class="keyword">if</span> (windowWidth - event.<span class="property">clientX</span> &lt; selectionIdealWidth) &#123;</span><br><span class="line">      left -= selectionIdealWidth</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">setStyle</span>(&#123;</span><br><span class="line">      left,</span><br><span class="line">      top</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;, [event, container])</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> <span class="title function_">showMaterial</span> = (<span class="params"></span>) =&gt; &#123;</span><br><span class="line">    <span class="comment">// ... 填写逻辑展示素材库</span></span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">const</span> <span class="title function_">uploadBySelf</span> = e =&gt; &#123;</span><br><span class="line">    <span class="comment">// 将事件传出给用户，由用户自己进行上传操作</span></span><br><span class="line">    uploadSelectionSubject.<span class="title function_">next</span>(&#123;</span><br><span class="line">      <span class="attr">event</span>: <span class="variable constant_">UPLOAD_EVENTS</span>.<span class="property">UPLOAD_BY_SELF</span></span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span> <span class="attr">className</span>=<span class="string">&#123;s.selectorWrapper&#125;</span> <span class="attr">style</span>=<span class="string">&#123;style&#125;</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">className</span>=<span class="string">&#123;s.btnWrapper&#125;</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">Button</span> <span class="attr">onClick</span>=<span class="string">&#123;showMaterial&#125;</span> <span class="attr">className</span>=<span class="string">&#123;s.btn&#125;</span>&gt;</span>素材库选择<span class="tag">&lt;/<span class="name">Button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">className</span>=<span class="string">&#123;s.btnWrapper&#125;</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">Button</span> <span class="attr">onClick</span>=<span class="string">&#123;uploadBySelf&#125;</span> <span class="attr">className</span>=<span class="string">&#123;s.btn&#125;</span>&gt;</span>本地上传<span class="tag">&lt;/<span class="name">Button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="title class_">UploadSelector</span></span><br></pre></td></tr></table></figure>
+
+<p>当event或container参数变化时，计算渲染的具体位置并改变容器元素selectorWrapper的style，selectorWrapper的css中的position属性是absolute，所以对应的left和top应该是相对于传入的容器的位置</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/Javascript/" rel="tag"># Javascript</a>
+              <a href="/blog/tags/React/" rel="tag"># React</a>
+              <a href="/blog/tags/Hooks/" rel="tag"># Hooks</a>
+              <a href="/blog/tags/popup/" rel="tag"># popup</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/console-optimization/" rel="prev" title="在B端项目中处理业务交互问题的若干经验">
+      <i class="fa fa-chevron-left"></i> 在B端项目中处理业务交互问题的若干经验
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/create-ng-micro-app/" rel="next" title="创建一个可以用于qiankun项目中的Angular微应用">
+      创建一个可以用于qiankun项目中的Angular微应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%9A%E5%8A%A1%E8%A6%81%E6%B1%82"><span class="nav-number">1.</span> <span class="nav-text">业务要求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E8%80%83"><span class="nav-number">2.</span> <span class="nav-text">思考</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E8%B7%B5"><span class="nav-number">3.</span> <span class="nav-text">实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E5%AE%9E%E7%8E%B0%E5%B0%86react%E9%A1%B9%E7%9B%AE%E6%89%93%E5%85%A5%E4%B8%80%E4%B8%AAsdk%E4%B8%AD%E4%BE%9B%E4%BA%BA%E5%BC%95%E7%94%A8"><span class="nav-number">3.1.</span> <span class="nav-text">1、实现将react项目打入一个sdk中供人引用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E5%AE%9E%E7%8E%B0%E7%82%B9%E5%87%BB%E7%89%B9%E5%AE%9A%E5%85%83%E7%B4%A0%E5%BC%B9%E5%87%BA%E7%94%B1SDK%E6%8E%A7%E5%88%B6%E7%9A%84%E5%BC%B9%E5%87%BA%E8%8F%9C%E5%8D%95"><span class="nav-number">3.2.</span> <span class="nav-text">2、实现点击特定元素弹出由SDK控制的弹出菜单</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨欣</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨欣</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
