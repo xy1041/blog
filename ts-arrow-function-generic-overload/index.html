@@ -20,28 +20,34 @@
     var CONFIG = {"hostname":"xy1041.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Y.X. Thinking Collection">
-<meta property="og:url" content="https://xy1041.github.io/blog/index.html">
+  <meta name="description" content="重载箭头函数首先我们在typescript中可以用 Call Signatures 方式来重载一个箭头函数： 1234567891011121314151617181920212223242526272829303132333435363738394041interface ArrowFunc &amp;#123;    &lt;T&gt;(x: T): T;    &lt;T&gt;(x: T[]):">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在Typescript中重载泛型函数组件以实现以某些参数控制其他参数类型的功能">
+<meta property="og:url" content="https://xy1041.github.io/blog/ts-arrow-function-generic-overload/index.html">
 <meta property="og:site_name" content="Y.X. Thinking Collection">
+<meta property="og:description" content="重载箭头函数首先我们在typescript中可以用 Call Signatures 方式来重载一个箭头函数： 1234567891011121314151617181920212223242526272829303132333435363738394041interface ArrowFunc &amp;#123;    &lt;T&gt;(x: T): T;    &lt;T&gt;(x: T[]):">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-06-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-06-12T02:57:23.774Z">
 <meta property="article:author" content="杨欣">
+<meta property="article:tag" content="React">
+<meta property="article:tag" content="Typescript">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://xy1041.github.io/blog/">
+<link rel="canonical" href="https://xy1041.github.io/blog/ts-arrow-function-generic-overload/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>Y.X. Thinking Collection</title>
+  <title>在Typescript中重载泛型函数组件以实现以某些参数控制其他参数类型的功能 | Y.X. Thinking Collection</title>
   
 
 
@@ -140,9 +146,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -158,10 +165,9 @@
       <meta itemprop="name" content="Y.X. Thinking Collection">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/ts-arrow-function-generic-overload/" class="post-title-link" itemprop="url">在Typescript中重载泛型函数组件以实现以某些参数控制其他参数类型的功能</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          在Typescript中重载泛型函数组件以实现以某些参数控制其他参数类型的功能
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -200,7 +206,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="重载箭头函数"><a href="#重载箭头函数" class="headerlink" title="重载箭头函数"></a>重载箭头函数</h1><p>首先我们在typescript中可以用 <code>Call Signatures</code> 方式来重载一个箭头函数：</p>
+        <h1 id="重载箭头函数"><a href="#重载箭头函数" class="headerlink" title="重载箭头函数"></a>重载箭头函数</h1><p>首先我们在typescript中可以用 <code>Call Signatures</code> 方式来重载一个箭头函数：</p>
 <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">ArrowFunc</span> &#123;</span><br><span class="line">    &lt;T&gt;(<span class="attr">x</span>: T): T;</span><br><span class="line"></span><br><span class="line">    &lt;T&gt;(<span class="attr">x</span>: T[]): T[];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 当需要内部用泛型T作为类型定义变量时</span></span><br><span class="line"><span class="keyword">const</span> <span class="attr">arrowFunc1</span>: <span class="title class_">ArrowFunc</span> = &lt;T&gt;(<span class="attr">x</span>: T): <span class="function"><span class="params">T</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="title class_">Array</span>.<span class="title function_">isArray</span>(x)) &#123;</span><br><span class="line">        <span class="keyword">return</span> x.<span class="title function_">map</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item) <span class="keyword">as</span> T</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 当不需要用泛型T作为类型定义变量时</span></span><br><span class="line"><span class="keyword">const</span> <span class="attr">arrowFunc2</span>: <span class="title class_">ArrowFunc</span> = <span class="function">(<span class="params">x</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="title class_">Array</span>.<span class="title function_">isArray</span>(x)) &#123;</span><br><span class="line">        <span class="keyword">return</span> x.<span class="title function_">map</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Arrow function overload</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">arrowFuncOverload</span>(<span class="params">x: <span class="built_in">number</span></span>): <span class="built_in">number</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">arrowFuncOverload</span>(<span class="params">x: <span class="built_in">string</span></span>): <span class="built_in">string</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">arrowFuncOverload</span>(<span class="params">x: <span class="built_in">any</span></span>): <span class="built_in">any</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> x === <span class="string">&quot;number&quot;</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> x + <span class="number">1</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> x + <span class="string">&quot;!&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> a = <span class="title function_">arrowFunc1</span>(<span class="number">10</span>); <span class="comment">// a is inferred to be `number`</span></span><br><span class="line"><span class="keyword">const</span> b = <span class="title function_">arrowFunc1</span>([<span class="string">&quot;hello&quot;</span>, <span class="string">&quot;world&quot;</span>]); <span class="comment">// b is inferred to be `string[]`</span></span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">arrowFuncOverload</span>(<span class="number">10</span>)); <span class="comment">// Output: 11</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">arrowFuncOverload</span>(<span class="string">&quot;hello&quot;</span>))</span><br></pre></td></tr></table></figure>
 
 
@@ -216,736 +222,35 @@
 <li>根据传入的类型参数限定传入的详细数据参数的结构类型</li>
 </ul>
 
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
+          <div class="post-tags">
+              <a href="/blog/tags/React/" rel="tag"># React</a>
+              <a href="/blog/tags/Typescript/" rel="tag"># Typescript</a>
+          </div>
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/asterisk-in-zsh-cli/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/asterisk-in-zsh-cli/" class="post-title-link" itemprop="url">星号符号（*）在CLI开发中造成的困难</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-11-15 00:00:00 / 修改时间：11:45:45" itemprop="dateCreated datePublished" datetime="2022-11-15T00:00:00+08:00">2022-11-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E9%80%A0%E8%BD%AE%E5%AD%90/" itemprop="url" rel="index"><span itemprop="name">造轮子</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在为公司的翻译工具创建CLI时，传入的参数中有星号符号（*）时遇到了无法识别，打印<code>zsh: no matches found</code>的问题</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/asterisk-in-zsh-cli/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/replace-hoc-with-custom-hooks/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/replace-hoc-with-custom-hooks/" class="post-title-link" itemprop="url">用自定义Hooks替代HOC（高阶组件）</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-07-13 11:06:23" itemprop="dateCreated datePublished" datetime="2022-07-13T11:06:23+08:00">2022-07-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-07-20 10:46:51" itemprop="dateModified" datetime="2022-07-20T10:46:51+08:00">2022-07-20</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/React/" itemprop="url" rel="index"><span itemprop="name">React</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>经过长时间的对React Hooks的使用，最终我认为，HOC的功能在绝大多数场景中都可以被自定义的Hooks取代，特此记录。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/replace-hoc-with-custom-hooks/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/asterisk-in-zsh-cli/" rel="prev" title="星号符号（*）在CLI开发中造成的困难">
+      <i class="fa fa-chevron-left"></i> 星号符号（*）在CLI开发中造成的困难
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
   
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/use-lint-staged-and-husky/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/use-lint-staged-and-husky/" class="post-title-link" itemprop="url">使用lint-staged在git提交前校验并自动修复部分不符合eslint规则的代码</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-07-11 15:07:10 / 修改时间：15:28:01" itemprop="dateCreated datePublished" datetime="2022-07-11T15:07:10+08:00">2022-07-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Git/" itemprop="url" rel="index"><span itemprop="name">Git</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>一样是脚手架搭建过程中需要的功能，在提交代码前自动运行eslint检查代码规范，并自动修复一些错误</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/use-lint-staged-and-husky/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/use-commit-lint-and-husky/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/use-commit-lint-and-husky/" class="post-title-link" itemprop="url">使用commitlint和husky校验git提交信息</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-06-30 15:01:13 / 修改时间：16:44:09" itemprop="dateCreated datePublished" datetime="2022-06-30T15:01:13+08:00">2022-06-30</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Git/" itemprop="url" rel="index"><span itemprop="name">Git</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在为Webpack5的脚手架搭建过程中，发现最新的husky的配置方式和commit信息的校验方式无法满足要求，故自己重新配置了husky和commitlint，来实现提交代码过程中对提交信息的控制。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/use-commit-lint-and-husky/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/dev-server-subdomain-redirect/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/dev-server-subdomain-redirect/" class="post-title-link" itemprop="url">webpack运行dev-server并使用nginx进行子域名代理时刷新路由页面回到二级域名的index.html的解决方法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-06-14 00:00:00 / 修改时间：18:10:28" itemprop="dateCreated datePublished" datetime="2022-06-14T00:00:00+08:00">2022-06-14</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Webpack/" itemprop="url" rel="index"><span itemprop="name">Webpack</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>某后台管理项目 <a target="_blank" rel="noopener" href="https://qiankun.umijs.org/zh/guide">乾坤</a> 驱动，由一个主项目通过乾坤的微前端方式引入下属的多个微项目，每个微项目都占据该主项目下的一个二级域名，在本地对某个微项目进行开发时，为了能够模拟多个微项目之间跳转或者模拟微项目子域名的跳转功能，需要用nginx对该子域名进行代理，nginx配置如下：</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/dev-server-subdomain-redirect/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/landscape-judge/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/landscape-judge/" class="post-title-link" itemprop="url">React移动端项目中判断设备的方向</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-04-19 00:00:00" itemprop="dateCreated datePublished" datetime="2022-04-19T00:00:00+08:00">2022-04-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-06-21 19:56:48" itemprop="dateModified" datetime="2022-06-21T19:56:48+08:00">2022-06-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/React/" itemprop="url" rel="index"><span itemprop="name">React</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>直播产品的直播页面分为两种布局，当手机设备横过来的时候需要切换为一种类似全屏的布局，所以需要在产品的各个组件中判断是否是横屏状态</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/landscape-judge/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/update-react-router-v6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/update-react-router-v6/" class="post-title-link" itemprop="url">更新react-router和react-router-dom到v6</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-04-18 00:00:00" itemprop="dateCreated datePublished" datetime="2022-04-18T00:00:00+08:00">2022-04-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-19 11:47:26" itemprop="dateModified" datetime="2022-04-19T11:47:26+08:00">2022-04-19</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/React/" itemprop="url" rel="index"><span itemprop="name">React</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>开发新项目的时候想找一个自己写的getQueryString的替代品，发现react-router-dom在6.0版本更新了useSearchParams的hooks，可以方便的获得浏览器地址里的query参数，故顺便将项目里的react-router-dom更新到了6.0</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/update-react-router-v6/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/wechat-mini-app-with-gulp-and-webpack/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/wechat-mini-app-with-gulp-and-webpack/" class="post-title-link" itemprop="url">使用gulp和webpack开发微信小程序</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-03-23 00:00:00" itemprop="dateCreated datePublished" datetime="2022-03-23T00:00:00+08:00">2022-03-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-07-06 18:20:06" itemprop="dateModified" datetime="2022-07-06T18:20:06+08:00">2022-07-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E5%B0%8F%E7%A8%8B%E5%BA%8F/" itemprop="url" rel="index"><span itemprop="name">小程序</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E5%B0%8F%E7%A8%8B%E5%BA%8F/React/" itemprop="url" rel="index"><span itemprop="name">React</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>微信小程序的IDE开发、打包📦 流程设计 和 typescript 应用方式</p>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>要为直播sdk开发微信小程序版，希望通过通用IDE（VSCode、WebStorm）开发，微信小程序开发工具仅作为快速预览工具使用</p>
-<p>希望使用Typescript，并且使用Gulp进行代码的处理和移动，在后续过程中发现处理打包关系上的诸多问题，因此在js处理流程中添加Webpack用来处理第三方依赖。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/wechat-mini-app-with-gulp-and-webpack/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/localstorage-request/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="杨欣">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Y.X. Thinking Collection">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/localstorage-request/" class="post-title-link" itemprop="url">通过 LocalStorage 实现的 跨浏览器页签通信机制</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2021-12-15 00:00:00" itemprop="dateCreated datePublished" datetime="2021-12-15T00:00:00+08:00">2021-12-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-06-21 20:11:21" itemprop="dateModified" datetime="2022-06-21T20:11:21+08:00">2022-06-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E9%80%A0%E8%BD%AE%E5%AD%90/" itemprop="url" rel="index"><span itemprop="name">造轮子</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>为了给公司的某桌面原生app提供可以在一个应用中的多个页签之间互相通信的功能，完成了一个通过可以跨页签的localStorage进行通信的工具类</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/localstorage-request/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
-  
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><a class="extend next" rel="next" href="/blog/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
-  </nav>
 
 
 
@@ -997,6 +302,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%87%8D%E8%BD%BD%E7%AE%AD%E5%A4%B4%E5%87%BD%E6%95%B0"><span class="nav-number">1.</span> <span class="nav-text">重载箭头函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%87%8D%E8%BD%BDReact%E5%87%BD%E6%95%B0%E7%BB%84%E4%BB%B6"><span class="nav-number">2.</span> <span class="nav-text">重载React函数组件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9A%A0%EF%B8%8F-%E9%9C%80%E8%A6%81%E6%B3%A8%E6%84%8F%E7%9A%84%E6%98%AF%EF%BC%8C%E9%87%8D%E8%BD%BD%E4%BD%BF%E5%BE%97%E8%B0%83%E7%94%A8%E6%96%B9%E5%8F%AF%E4%BB%A5%E6%98%8E%E7%A1%AE%E7%9F%A5%E6%99%93%E8%87%AA%E5%B7%B1%E4%BC%A0%E5%85%A5%E4%B8%8D%E5%90%8C%E5%8F%82%E6%95%B0%E6%97%B6%E5%8F%97%E5%BD%B1%E5%93%8D%E7%9A%84%E5%8F%82%E6%95%B0%E7%9A%84%E7%B1%BB%E5%9E%8B%EF%BC%8C%E4%BD%86%E7%BB%84%E4%BB%B6%E5%86%85%E9%83%A8%E6%98%AF%E6%97%A0%E4%BB%8E%E5%BE%97%E7%9F%A5%E7%9A%84%EF%BC%8C%E5%A6%82%E6%9E%9C%E7%B1%BB%E5%9E%8B%E5%8F%98%E5%8C%96%EF%BC%8C%E9%9C%80%E8%A6%81%E7%BC%96%E5%86%99%E8%80%85%E8%87%AA%E5%B7%B1%E6%98%BE%E5%BC%8F%E6%8C%87%E5%AE%9A%E4%BB%80%E4%B9%88%E6%9D%A1%E4%BB%B6%E4%B8%8B%E4%BC%9A%E5%8F%98%E5%8C%96%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%82%E6%95%B0%E6%98%AF%E4%BB%80%E4%B9%88%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.0.1.</span> <span class="nav-text">⚠️  需要注意的是，重载使得调用方可以明确知晓自己传入不同参数时受影响的参数的类型，但组件内部是无从得知的，如果类型变化，需要编写者自己显式指定什么条件下会变化类型的参数是什么类型</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
