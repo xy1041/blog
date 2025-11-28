@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"xy1041.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="背景公司的低代码自定义组件系统，允许用户自己编写React组件并执行，为了防止其对全局内容造成安全隐患，要对它执行的环境进行沙箱隔离，隔离时过滤掉其中危险的部分代码，并且对自定义组件可以使用的变量、方法等进行限制。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="允许用户自定义的沙箱安全策略">
+<meta property="og:url" content="https://xy1041.github.io/blog/safe-sandbox-vars/index.html">
+<meta property="og:site_name" content="Y.X. Thinking Collection">
+<meta property="og:description" content="背景公司的低代码自定义组件系统，允许用户自己编写React组件并执行，为了防止其对全局内容造成安全隐患，要对它执行的环境进行沙箱隔离，隔离时过滤掉其中危险的部分代码，并且对自定义组件可以使用的变量、方法等进行限制。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-11-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-11-28T05:52:12.955Z">
+<meta property="article:author" content="杨欣">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://xy1041.github.io/blog/safe-sandbox-vars/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>允许用户自定义的沙箱安全策略 | Y.X. Thinking Collection</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Y.X. Thinking Collection</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">做了什么要记下来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/safe-sandbox-vars/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="杨欣">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Y.X. Thinking Collection">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          允许用户自定义的沙箱安全策略
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-11-28 00:00:00 / 修改时间：13:52:12" itemprop="dateCreated datePublished" datetime="2025-11-28T00:00:00+08:00">2025-11-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/sandbox/" itemprop="url" rel="index"><span itemprop="name">sandbox</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>公司的低代码自定义组件系统，允许用户自己编写React组件并执行，为了防止其对全局内容造成安全隐患，要对它执行的环境进行沙箱隔离，隔离时过滤掉其中危险的部分代码，并且对自定义组件可以使用的变量、方法等进行限制。</p>
+<span id="more"></span>   
+
+<h1 id="限制变量表"><a href="#限制变量表" class="headerlink" title="限制变量表"></a>限制变量表</h1><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 安全配置常量</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">const</span> <span class="variable constant_">SECURITY_CONFIG</span> = &#123;</span><br><span class="line">  <span class="comment">// 禁止访问的全局变量/方法 (通过window代理和直接拦截限制)</span></span><br><span class="line">  <span class="attr">FORBIDDEN_GLOBALS</span>: [</span><br><span class="line">    <span class="string">&#x27;fetch&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;XMLHttpRequest&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;WebSocket&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Worker&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;SharedWorker&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;ServiceWorker&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;EventSource&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Request&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Headers&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;RTCPeerConnection&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;RTCDataChannel&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;BroadcastChannel&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;MessageChannel&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;MediaSource&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;localStorage&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;sessionStorage&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;indexedDB&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;eval&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Function&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;globalThis&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;parent&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;top&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;open&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;postMessage&#x27;</span>,</span><br><span class="line">  ],</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 完全禁止访问的特殊敏感属性 (通过AST分析限制)</span></span><br><span class="line">  <span class="attr">FORBIDDEN_SENSITIVE_PROPERTIES</span>: [</span><br><span class="line">    <span class="string">&#x27;ownerDocument&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;defaultView&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;contentWindow&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;contentDocument&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;cookie&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;getRootNode&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;sendBeacon&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;registerProtocolHandler&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;registerContentHandler&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;credentials&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;serviceWorker&#x27;</span>,</span><br><span class="line">  ],</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 禁止创建的HTML元素</span></span><br><span class="line">  <span class="attr">FORBIDDEN_ELEMENTS</span>: [<span class="string">&#x27;script&#x27;</span>, <span class="string">&#x27;iframe&#x27;</span>, <span class="string">&#x27;object&#x27;</span>, <span class="string">&#x27;embed&#x27;</span>, <span class="string">&#x27;applet&#x27;</span>],</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 敏感属性</span></span><br><span class="line">  <span class="attr">SENSITIVE_ATTRIBUTES</span>: [<span class="string">&#x27;src&#x27;</span>, <span class="string">&#x27;srcdoc&#x27;</span>, <span class="string">&#x27;code&#x27;</span>, <span class="string">&#x27;data&#x27;</span>],</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 使用正则表达式检查危险代码模式</span></span><br><span class="line">  <span class="attr">DANGEROUS_PATTERNS</span>: [</span><br><span class="line">    <span class="comment">// Script标签插入</span></span><br><span class="line">    <span class="regexp">/&lt;script/i</span>,</span><br><span class="line">    <span class="regexp">/document\.createElement\([&#x27;&quot;`]script[&#x27;&quot;`]\)/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// iframe相关</span></span><br><span class="line">    <span class="regexp">/&lt;iframe/i</span>,</span><br><span class="line">    <span class="regexp">/document\.createElement\([&#x27;&quot;`]iframe[&#x27;&quot;`]\)/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 请求相关</span></span><br><span class="line">    <span class="regexp">/new XMLHttpRequest/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 其他危险API</span></span><br><span class="line">    <span class="regexp">/eval\s*\(/i</span>,</span><br><span class="line">    <span class="regexp">/new Function/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// React危险属性</span></span><br><span class="line">    <span class="regexp">/dangerouslySetInnerHTML/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// localStorage访问模式</span></span><br><span class="line">    <span class="regexp">/localStorage\./i</span>,</span><br><span class="line">    <span class="regexp">/\.localStorage/i</span>,</span><br><span class="line">    <span class="regexp">/\[&#x27;localStorage&#x27;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[&quot;localStorage&quot;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[`localStorage`\]/i</span>,</span><br><span class="line">    <span class="regexp">/window\.localStorage/i</span>,</span><br><span class="line">    <span class="regexp">/globalThis\.localStorage/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// sessionStorage同样拦截</span></span><br><span class="line">    <span class="regexp">/sessionStorage\./i</span>,</span><br><span class="line">    <span class="regexp">/\.sessionStorage/i</span>,</span><br><span class="line">    <span class="regexp">/\[&#x27;sessionStorage&#x27;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[&quot;sessionStorage&quot;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[`sessionStorage`\]/i</span>,</span><br><span class="line">    <span class="regexp">/window\.sessionStorage/i</span>,</span><br><span class="line">    <span class="regexp">/globalThis\.sessionStorage/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// cookie访问</span></span><br><span class="line">    <span class="regexp">/\.cookie/i</span>,</span><br><span class="line">    <span class="regexp">/\[[&#x27;&quot;]cookie[&#x27;&quot;]]/i</span>,</span><br><span class="line">    <span class="regexp">/\[&#x27;cookie&#x27;]/i</span>,</span><br><span class="line">    <span class="regexp">/\[&quot;cookie&quot;]/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ownerDocument相关</span></span><br><span class="line">    <span class="regexp">/\.ownerDocument/i</span>,</span><br><span class="line">    <span class="regexp">/\[&#x27;ownerDocument&#x27;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[&quot;ownerDocument&quot;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[`ownerDocument`\]/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// defaultView相关</span></span><br><span class="line">    <span class="regexp">/\.defaultView/i</span>,</span><br><span class="line">    <span class="regexp">/\[&#x27;defaultView&#x27;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[&quot;defaultView&quot;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[`defaultView`\]/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// contentWindow相关</span></span><br><span class="line">    <span class="regexp">/\.contentWindow/i</span>,</span><br><span class="line">    <span class="regexp">/\[&#x27;contentWindow&#x27;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[&quot;contentWindow&quot;\]/i</span>,</span><br><span class="line">    <span class="regexp">/\[`contentWindow`\]/i</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 字符串拼接相关方法</span></span><br><span class="line">    <span class="regexp">/String\.fromCharCode/i</span>,</span><br><span class="line">    <span class="regexp">/String\.fromCodePoint/i</span>,</span><br><span class="line">    <span class="regexp">/\.concat\(/i</span>,</span><br><span class="line">  ],</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 计时器方法 - 需要特殊处理</span></span><br><span class="line">  <span class="attr">TIMER_FUNCTIONS</span>: [<span class="string">&#x27;setTimeout&#x27;</span>, <span class="string">&#x27;setInterval&#x27;</span>],</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>在创造沙箱window和React等全局对象时，通过以上的规则来识别并清除、限制可能有隐患的代码调用、定义，即可实现一个较为安全的沙箱运行环境</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/filtering-typescript-enum-values-by-type/" rel="prev" title="TS中如何从枚举中筛选出符合特定条件的枚举值的联合类型">
+      <i class="fa fa-chevron-left"></i> TS中如何从枚举中筛选出符合特定条件的枚举值的联合类型
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/custom-i18n/" rel="next" title="分析formatJS的自定义i18n涉及的文字提取方案">
+      分析formatJS的自定义i18n涉及的文字提取方案 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%99%90%E5%88%B6%E5%8F%98%E9%87%8F%E8%A1%A8"><span class="nav-number">2.</span> <span class="nav-text">限制变量表</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨欣</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">27</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨欣</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
