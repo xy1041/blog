@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"xy1041.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="背景公司的aPaaS系统分层多，时间跨度大，使用框架多，为了能够尽可能快速地实现大部分系统的国际化，需要开发一个能够跨框架、方便开发者使用、能够进行时间转换和数字格式转换等功能的国际化方案，其中需要尽可能对开发者友好，能够让开发者尽可能快地提取出现有的中文文案并生成文件，交由国际化团队进行翻译，并且翻译后的文本可以简单地应用于项目中，故对类似功能的包进行分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分析formatJS的自定义i18n涉及的文字提取方案">
+<meta property="og:url" content="https://xy1041.github.io/blog/custom-i18n/index.html">
+<meta property="og:site_name" content="Y.X. Thinking Collection">
+<meta property="og:description" content="背景公司的aPaaS系统分层多，时间跨度大，使用框架多，为了能够尽可能快速地实现大部分系统的国际化，需要开发一个能够跨框架、方便开发者使用、能够进行时间转换和数字格式转换等功能的国际化方案，其中需要尽可能对开发者友好，能够让开发者尽可能快地提取出现有的中文文案并生成文件，交由国际化团队进行翻译，并且翻译后的文本可以简单地应用于项目中，故对类似功能的包进行分析">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-11-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-11-28T02:55:07.690Z">
+<meta property="article:author" content="杨欣">
+<meta property="article:tag" content="i18n formatJS Typescript">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://xy1041.github.io/blog/custom-i18n/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>分析formatJS的自定义i18n涉及的文字提取方案 | Y.X. Thinking Collection</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Y.X. Thinking Collection</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">做了什么要记下来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://xy1041.github.io/blog/custom-i18n/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="杨欣">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Y.X. Thinking Collection">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          分析formatJS的自定义i18n涉及的文字提取方案
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-11-28 00:00:00 / 修改时间：10:55:07" itemprop="dateCreated datePublished" datetime="2025-11-28T00:00:00+08:00">2025-11-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%8A%80%E6%9C%AF%E5%88%86%E6%9E%90/" itemprop="url" rel="index"><span itemprop="name">技术分析</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>公司的aPaaS系统分层多，时间跨度大，使用框架多，为了能够尽可能快速地实现大部分系统的国际化，需要开发一个能够跨框架、方便开发者使用、能够进行时间转换和数字格式转换等功能的国际化方案，其中需要尽可能对开发者友好，能够让开发者尽可能快地提取出现有的中文文案并生成文件，交由国际化团队进行翻译，并且翻译后的文本可以简单地应用于项目中，故对类似功能的包进行分析</p>
+<span id="more"></span>   
+
+<p>类似的功能参考<a target="_blank" rel="noopener" href="https://formatjs.github.io/">formatJS</a>, 它的extract方案如下：</p>
+<h1 id="运行方式"><a href="#运行方式" class="headerlink" title="运行方式"></a>运行方式</h1><p>formatjs的extract方案，通过install后注册全局CLI的方式运行。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">formatjs extract -- <span class="string">&#x27;src/**/*.ts*&#x27;</span> --ignore=<span class="string">&#x27;**/*.d.ts&#x27;</span> --out-file lang/en.json --id-interpolation-pattern <span class="string">&#x27;[sha512:contenthash:base64:6]&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="运行原理"><a href="#运行原理" class="headerlink" title="运行原理"></a>运行原理</h1><p>使用cli运行后，会执行formatjs的bin目录中的相关js脚本，除去大部分判断逻辑、I&#x2F;O和与extract 函数调用无关的代码后，核心代码为</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Extract strings from source files</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> files list of files</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> extractOpts extract options</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@returns</span> messages serialized as JSON string since key order</span></span><br><span class="line"><span class="comment"> * matters for some `format`</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">extract</span>(<span class="params"></span></span><br><span class="line"><span class="params">  files: readonly string[],</span></span><br><span class="line"><span class="params">  extractOpts: ExtractOpts</span></span><br><span class="line"><span class="params"></span>) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="attr">rawResults</span>: <span class="title class_">Array</span>&lt;<span class="title class_">ExtractionResult</span> | <span class="literal">undefined</span>&gt;</span><br><span class="line">    </span><br><span class="line">    rawResults = <span class="keyword">await</span> <span class="title class_">Promise</span>.<span class="title function_">all</span>(</span><br><span class="line">      files.<span class="title function_">map</span>(<span class="keyword">async</span> fn =&gt; &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="keyword">const</span> source = <span class="keyword">await</span> <span class="title function_">readFile</span>(fn, <span class="string">&#x27;utf8&#x27;</span>)</span><br><span class="line">          <span class="keyword">return</span> <span class="title function_">processFile</span>(source, fn, opts)</span><br><span class="line">        &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">          <span class="keyword">if</span> (throws) &#123;</span><br><span class="line">            <span class="keyword">throw</span> e</span><br><span class="line">          &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="title function_">warn</span>(<span class="title class_">String</span>(e))</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;)</span><br><span class="line">)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">processFile</span>(<span class="params"></span></span><br><span class="line"><span class="params">  source: string,</span></span><br><span class="line"><span class="params">  fn: string,</span></span><br><span class="line"><span class="params">  &#123;idInterpolationPattern, ...opts&#125;: Opts &amp; &#123;idInterpolationPattern?: string&#125;</span></span><br><span class="line"><span class="params"></span>)&#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="attr">messages</span>: <span class="title class_">ExtractedMessageDescriptor</span>[] = []</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    opts = &#123;</span><br><span class="line">          ...opts,</span><br><span class="line">          <span class="title function_">onMsgExtracted</span>(<span class="params">_, msgs</span>) &#123;</span><br><span class="line">              messages = messages.<span class="title function_">concat</span>(msgs)</span><br><span class="line">            &#125;,</span><br><span class="line">          &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">const</span> scriptParseFn = <span class="title function_">parseScript</span>(opts, fn)</span><br><span class="line">    </span><br><span class="line">    <span class="title function_">scriptParseFn</span>(source)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Invoid TypeScript module transpilation with our TS transformer</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> opts Formatjs TS Transformer opt</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> fn filename</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">parseScript</span>(<span class="params">opts: Opts, fn?: string</span>) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="function">(<span class="params">source: string</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">let</span> output</span><br><span class="line">      </span><br><span class="line">      output = ts.<span class="title function_">transpileModule</span>(source, &#123;</span><br><span class="line">          <span class="attr">compilerOptions</span>: &#123;</span><br><span class="line">            <span class="attr">allowJs</span>: <span class="literal">true</span>,</span><br><span class="line">            <span class="attr">target</span>: ts.<span class="property">ScriptTarget</span>.<span class="property">ESNext</span>,</span><br><span class="line">            <span class="attr">noEmit</span>: <span class="literal">true</span>,</span><br><span class="line">            <span class="attr">experimentalDecorators</span>: <span class="literal">true</span>,</span><br><span class="line">          &#125;,</span><br><span class="line">          <span class="attr">reportDiagnostics</span>: <span class="literal">true</span>,</span><br><span class="line">          <span class="attr">fileName</span>: fn,</span><br><span class="line">          <span class="attr">transformers</span>: &#123;</span><br><span class="line">            <span class="attr">before</span>: [<span class="title function_">transformWithTs</span>(ts, opts)],</span><br><span class="line">          &#125;,</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">transformWithTs</span>(<span class="params">ts: TypeScript, opts: Opts</span>) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="params">ctx</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="function">(<span class="params">sf: typescript.SourceFile</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> ts.<span class="title function_">visitNode</span>(sf, <span class="title function_">getVisitor</span>(ts, ctx, sf, opts))</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">getVisitor</span>(<span class="params"></span></span><br><span class="line"><span class="params">  ts: TypeScript,</span></span><br><span class="line"><span class="params">  ctx: typescript.TransformationContext,</span></span><br><span class="line"><span class="params">  sf: typescript.SourceFile,</span></span><br><span class="line"><span class="params">  opts: Opts</span></span><br><span class="line"><span class="params"></span>) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> <span class="attr">visitor</span>: typescript.<span class="property">Visitor</span> = (</span><br><span class="line">      <span class="attr">node</span>: typescript.<span class="property">Node</span></span><br><span class="line">    ): typescript.<span class="property">Node</span> =&gt; &#123;</span><br><span class="line">      <span class="keyword">const</span> newNode = ts.<span class="title function_">isCallExpression</span>(node)</span><br><span class="line">        ? <span class="title function_">extractMessagesFromCallExpression</span>(ts, ctx.<span class="property">factory</span>, node, opts, sf)</span><br><span class="line">        : ts.<span class="title function_">isJsxOpeningElement</span>(node) || ts.<span class="title function_">isJsxSelfClosingElement</span>(node)</span><br><span class="line">        ? <span class="title function_">extractMessageFromJsxComponent</span>(ts, ctx.<span class="property">factory</span>, node, opts, sf)</span><br><span class="line">        : node</span><br><span class="line">      <span class="keyword">return</span> ts.<span class="title function_">visitEachChild</span>(newNode, visitor, ctx)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> visitor</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">extractMessagesFromCallExpression</span>(<span class="params"></span></span><br><span class="line"><span class="params">  ts: TypeScript,</span></span><br><span class="line"><span class="params">  factory: typescript.NodeFactory,</span></span><br><span class="line"><span class="params">  node: typescript.CallExpression,</span></span><br><span class="line"><span class="params">  opts: Opts,</span></span><br><span class="line"><span class="params">  sf: typescript.SourceFile</span></span><br><span class="line"><span class="params"></span>): <span class="keyword">typeof</span> node &#123;</span><br><span class="line">    <span class="keyword">const</span> &#123;onMsgExtracted, additionalFunctionNames&#125; = opts</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (</span><br><span class="line">      <span class="title function_">isSingularMessageDecl</span>(ts, node, opts.<span class="property">additionalComponentNames</span> || []) ||</span><br><span class="line">      <span class="title function_">isMemberMethodFormatMessageCall</span>(ts, node, additionalFunctionNames || [])</span><br><span class="line">    ) &#123;</span><br><span class="line">        <span class="keyword">const</span> [descriptorsObj, ...restArgs] = node.<span class="property">arguments</span></span><br><span class="line">        <span class="keyword">if</span> (ts.<span class="title function_">isObjectLiteralExpression</span>(descriptorsObj)) &#123;</span><br><span class="line">          <span class="keyword">const</span> msg = <span class="title function_">extractMessageDescriptor</span>(ts, descriptorsObj, opts, sf)</span><br><span class="line">          <span class="keyword">if</span> (!msg) &#123;</span><br><span class="line">            <span class="keyword">return</span> node</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="title function_">debug</span>(<span class="string">&#x27;Message extracted from &quot;%s&quot;: %s&#x27;</span>, sf.<span class="property">fileName</span>, msg)</span><br><span class="line">          <span class="keyword">if</span> (<span class="keyword">typeof</span> onMsgExtracted === <span class="string">&#x27;function&#x27;</span>) &#123;</span><br><span class="line">            <span class="title function_">onMsgExtracted</span>(sf.<span class="property">fileName</span>, [msg])</span><br><span class="line">          &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">isSingularMessageDecl</span>(<span class="params"></span></span><br><span class="line"><span class="params">  ts: TypeScript,</span></span><br><span class="line"><span class="params">  node:</span></span><br><span class="line"><span class="params">    | typescript.CallExpression</span></span><br><span class="line"><span class="params">    | typescript.JsxOpeningElement</span></span><br><span class="line"><span class="params">    | typescript.JsxSelfClosingElement,</span></span><br><span class="line"><span class="params">  additionalComponentNames: string[]</span></span><br><span class="line"><span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> compNames = <span class="keyword">new</span> <span class="title class_">Set</span>([</span><br><span class="line">    <span class="string">&#x27;FormattedMessage&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;defineMessage&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;formatMessage&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;$formatMessage&#x27;</span>,</span><br><span class="line">    ...additionalComponentNames,</span><br><span class="line">  ])</span><br><span class="line">  <span class="keyword">let</span> fnName = <span class="string">&#x27;&#x27;</span></span><br><span class="line">  <span class="keyword">if</span> (ts.<span class="title function_">isCallExpression</span>(node) &amp;&amp; ts.<span class="title function_">isIdentifier</span>(node.<span class="property">expression</span>)) &#123;</span><br><span class="line">    fnName = node.<span class="property">expression</span>.<span class="property">text</span></span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (ts.<span class="title function_">isJsxOpeningElement</span>(node) &amp;&amp; ts.<span class="title function_">isIdentifier</span>(node.<span class="property">tagName</span>)) &#123;</span><br><span class="line">    fnName = node.<span class="property">tagName</span>.<span class="property">text</span></span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (</span><br><span class="line">    ts.<span class="title function_">isJsxSelfClosingElement</span>(node) &amp;&amp;</span><br><span class="line">    ts.<span class="title function_">isIdentifier</span>(node.<span class="property">tagName</span>)</span><br><span class="line">  ) &#123;</span><br><span class="line">    fnName = node.<span class="property">tagName</span>.<span class="property">text</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> compNames.<span class="title function_">has</span>(fnName)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Check if node is `foo.bar.formatMessage` node</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> <span class="variable">node</span></span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> <span class="variable">sf</span></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">isMemberMethodFormatMessageCall</span>(<span class="params"></span></span><br><span class="line"><span class="params">  ts: TypeScript,</span></span><br><span class="line"><span class="params">  node: typescript.CallExpression,</span></span><br><span class="line"><span class="params">  additionalFunctionNames: string[]</span></span><br><span class="line"><span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> fnNames = <span class="keyword">new</span> <span class="title class_">Set</span>([</span><br><span class="line">    <span class="string">&#x27;formatMessage&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;$formatMessage&#x27;</span>,</span><br><span class="line">    ...additionalFunctionNames,</span><br><span class="line">  ])</span><br><span class="line">  <span class="keyword">const</span> method = node.<span class="property">expression</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Handle foo.formatMessage()</span></span><br><span class="line">  <span class="keyword">if</span> (ts.<span class="title function_">isPropertyAccessExpression</span>(method)) &#123;</span><br><span class="line">    <span class="keyword">return</span> fnNames.<span class="title function_">has</span>(method.<span class="property">name</span>.<span class="property">text</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Handle formatMessage()</span></span><br><span class="line">  <span class="keyword">return</span> ts.<span class="title function_">isIdentifier</span>(method) &amp;&amp; fnNames.<span class="title function_">has</span>(method.<span class="property">text</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>可以看到，在通过typescript的compiler，formatjs获得了代码的typescript node结构，通过ts判断node的类型，将callExpression的过滤出来，然后通过<strong>node.expression下的name或text获得函数名</strong>，判断是否是调用formatMessage和$formatMessage方法，以及其他自己传入的函数名的callExpression，来决定是否要将该node下的相关属性提取出来。</p>
+<h1 id="分析结果"><a href="#分析结果" class="headerlink" title="分析结果"></a>分析结果</h1><p>后续按照formatJS的实现方案，将其修改为判断$hbt方法的调用，然后在开发过程中只需要用$hbt方法包裹需要翻译的文字，之后就可以由他人执行extract命令，并导出对应的字符串，再交由翻译人员进行翻译了</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/i18n-formatJS-Typescript/" rel="tag"># i18n formatJS Typescript</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/filtering-typescript-enum-values-by-type/" rel="prev" title="TS中如何从枚举中筛选出符合特定条件的枚举值的联合类型">
+      <i class="fa fa-chevron-left"></i> TS中如何从枚举中筛选出符合特定条件的枚举值的联合类型
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%96%B9%E5%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">运行方式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">运行原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E7%BB%93%E6%9E%9C"><span class="nav-number">4.</span> <span class="nav-text">分析结果</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨欣</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨欣</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
